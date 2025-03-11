@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'mobile_login.dart'; // Import the MobileLogin page
+import 'welcome_page.dart';
 
 class RoleSelection extends StatelessWidget {
   const RoleSelection({super.key});
@@ -22,9 +23,12 @@ class RoleSelection extends StatelessWidget {
         foregroundColor:
             Colors.white, // Ensure all foreground elements are white
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back), // Back arrow icon
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context); // Navigate back to the previous page
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const WelcomePage()),
+            );
           },
         ),
       ),

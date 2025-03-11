@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'mobile_register.dart';
 import 'main_page.dart'; // Import main page
 import 'package:firebase_auth/firebase_auth.dart';
+import 'role_selection.dart';
 
 class MobileLogin extends StatefulWidget {
   final String selectedRole;
@@ -95,7 +96,12 @@ class _MobileLoginState extends State<MobileLogin> {
         foregroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const RoleSelection()),
+            );
+          },
         ),
       ),
       body: Container(
