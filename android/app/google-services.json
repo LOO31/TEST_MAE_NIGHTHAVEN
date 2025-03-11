@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "418990663135",
+    "project_id": "g7-mae-assignment-bcc3e",
+    "storage_bucket": "g7-mae-assignment-bcc3e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:418990663135:android:4c275b19d49c2c754dd06a",
+        "android_client_info": {
+          "package_name": "com.example.grp_mae_assignment"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "418990663135-b1fkgihs3vntfupm88imjfpmpuo57qj7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCSyiWtDWOKY37bMcve6XBL-49PXBwkoI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "418990663135-b1fkgihs3vntfupm88imjfpmpuo57qj7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "418990663135-g37h1iqb0vuasqvptqda17qabjmllt5i.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.grpMaeAssignment"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
