@@ -1,9 +1,45 @@
+import 'dart:async'; // Suitable for Timer
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'mobile_login.dart'; // Import your login page
+import 'mobile_login.dart';
 
-class MainPage extends StatelessWidget {
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
+
+  @override
+  _MainPageState createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  late String _currentTime; // Store Timing
+  late Timer _timer; // Timer
+
+  @override
+  void initState() {
+    super.initState();
+    _updateTime(); // format Time
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _updateTime(); // update time per sec
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Stop timer when destroyed
+    super.dispose();
+  }
+
+  void _updateTime() {
+    final now = DateTime.now();
+    setState(() {
+      _currentTime =
+          "${_formatNumber(now.hour)} : ${_formatNumber(now.minute)}";
+    });
+  }
+
+  String _formatNumber(int number) {
+    return number.toString().padLeft(2, '0'); // ensure two digit
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +59,7 @@ class MainPage extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () => _handleLogout(context), // Logout button
+            onPressed: () => _handleLogout(context),
           ),
         ],
       ),
@@ -52,62 +88,81 @@ class MainPage extends StatelessWidget {
     );
   }
 
+  Widget _buildClockWidget() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 210, // Circle Size
+          height: 210,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white,
+              width: 4, // Circle's Width
+            ),
+          ),
+        ),
+        Column(
+          children: [
+            Text(
+              _currentTime,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              _getGreetingMessage(),
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _getGreetingMessage() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return "Good Morning";
+    } else if (hour >= 12 && hour < 18) {
+      return "Good Afternoon";
+    } else {
+      return "Good Night";
+    }
+  }
+
   void _handleLogout(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
 
-      // Ensure widget is still mounted before using context
       if (!context.mounted) return;
 
-      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Logout Success"),
-          duration: Duration(seconds: 2),
-        ),
+        const SnackBar(content: Text("Logout Success")),
       );
 
-      // Delay navigation to allow the user to see the message
       Future.delayed(const Duration(seconds: 2), () {
         if (!context.mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => const MobileLogin(selectedRole: ''),
-          ),
+              builder: (context) => const MobileLogin(selectedRole: '')),
           (route) => false,
         );
       });
     } catch (e) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Logout failed: ${e.toString()}")),
       );
     }
-  }
-
-  Widget _buildClockWidget() {
-    return const Column(
-      children: [
-        Text(
-          "20 : 30",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 48,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        SizedBox(height: 10),
-        Text(
-          "Good Night",
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 18,
-          ),
-        ),
-      ],
-    );
   }
 
   Widget _buildConnectedDevicesSection() {
