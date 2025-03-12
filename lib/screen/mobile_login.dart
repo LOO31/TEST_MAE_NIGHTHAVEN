@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '/admin/admin_dashboard.dart';
 import 'mobile_register.dart';
 import 'main_page.dart'; // Import main page
 import 'package:firebase_auth/firebase_auth.dart';
@@ -56,7 +57,6 @@ class _MobileLoginState extends State<MobileLogin> {
 
     if (email.isNotEmpty && password.isNotEmpty) {
       try {
-        // Authenticate with Firebase
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: password,
@@ -64,11 +64,12 @@ class _MobileLoginState extends State<MobileLogin> {
 
         if (!mounted) return;
 
-        // Navigate to MainPage after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const MainPage()),
-        );
+        if (widget.selectedRole.toLowerCase() == 'admin') {
+          Navigator.pushReplacementNamed(context, '/admin'); // ✅ 确保继承全局主题
+        } else {
+          Navigator.pushReplacementNamed(
+              context, '/main'); // ✅ 其他用户跳转到 MainPage
+        }
       } on FirebaseAuthException catch (e) {
         if (!mounted) return;
 
