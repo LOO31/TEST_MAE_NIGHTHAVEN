@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../services/auth_service.dart'; // Import AuthService
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import '../services/auth_service.dart';
 
 class MobileRegister extends StatefulWidget {
   const MobileRegister({super.key});
@@ -13,8 +15,10 @@ class _MobileRegisterState extends State<MobileRegister> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService(); // Initialize AuthService
-  String? _errorMessage; // To show errors if sign-up fails
+  final AuthService _authService = AuthService();
+
+  String? _errorMessage;
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +30,7 @@ class _MobileRegisterState extends State<MobileRegister> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Container(
@@ -36,10 +38,7 @@ class _MobileRegisterState extends State<MobileRegister> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF091E40),
-              Color(0xFF66363A),
-            ],
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
           ),
         ),
         child: Padding(
@@ -48,30 +47,9 @@ class _MobileRegisterState extends State<MobileRegister> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Image.asset("assets/images/NightHavenLogo.jpg",
-                      fit: BoxFit.cover),
-                ),
-              ),
+              _buildLogo(),
               const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Sign Up",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              _buildTitle(),
               const SizedBox(height: 20),
               _buildTextField("Username", controller: _userController),
               const SizedBox(height: 15),
@@ -86,46 +64,9 @@ class _MobileRegisterState extends State<MobileRegister> {
                   style: const TextStyle(color: Colors.red, fontSize: 14),
                 ),
               const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Already have an account?",
-                    style: TextStyle(color: Colors.white70),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      "Sign In",
-                      style: GoogleFonts.poppins(
-                          color: Colors.white, fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
+              _buildSignInPrompt(),
               const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _registerUser,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    backgroundColor: Colors.purple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    "Sign Up",
-                    style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
+              _buildRegisterButton(),
             ],
           ),
         ),
@@ -133,27 +74,30 @@ class _MobileRegisterState extends State<MobileRegister> {
     );
   }
 
-  void _registerUser() async {
-    String username = _userController.text.trim();
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
+  Widget _buildLogo() {
+    return Center(
+      child: Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child:
+            Image.asset("assets/images/NightHavenLogo.jpg", fit: BoxFit.cover),
+      ),
+    );
+  }
 
-    if (username.isEmpty || email.isEmpty || password.isEmpty) {
-      setState(() {
-        _errorMessage = "Username, Email, and Password cannot be empty!";
-      });
-      return;
-    }
-
-    String? result = await _authService.signUp(username, email, password);
-
-    if (result == null) {
-      Navigator.pop(context);
-    } else {
-      setState(() {
-        _errorMessage = result;
-      });
-    }
+  Widget _buildTitle() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        "Sign Up",
+        style: GoogleFonts.poppins(
+            color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+    );
   }
 
   Widget _buildTextField(String hint,
@@ -168,12 +112,86 @@ class _MobileRegisterState extends State<MobileRegister> {
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white70),
         border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
         suffixIcon: isPassword
             ? const Icon(Icons.visibility, color: Colors.white54)
             : null,
       ),
     );
+  }
+
+  Widget _buildSignInPrompt() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Already have an account?",
+            style: TextStyle(color: Colors.white70)),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text("Sign In",
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRegisterButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _registerUser,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          backgroundColor: Colors.purple,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text("Sign Up",
+                style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  void _registerUser() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    String username = _userController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (username.isEmpty || email.isEmpty || password.isEmpty) {
+      setState(() {
+        _errorMessage = "Username, Email, and Password cannot be empty!";
+        _isLoading = false;
+      });
+      return;
+    }
+
+    // Hash the password using SHA-256
+    String hashedPassword = sha256.convert(utf8.encode(password)).toString();
+
+    // Call AuthService to register with hashed password
+    String? result = await _authService.signUp(username, email, hashedPassword);
+
+    if (result == null) {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } else {
+      setState(() {
+        _errorMessage = result;
+        _isLoading = false;
+      });
+    }
   }
 }
