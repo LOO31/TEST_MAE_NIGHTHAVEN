@@ -19,25 +19,26 @@ class _MainPageState extends State<MainPage> {
     super.initState();
     _updateTime(); // format Time
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _updateTime(); // update time per
+      _updateTime(); // update time per sec
     });
   }
 
   @override
   void dispose() {
-    _timer.cancel(); // 组件销毁时停止定时器
+    _timer.cancel(); // Stop timer when destroyed
     super.dispose();
   }
 
   void _updateTime() {
     final now = DateTime.now();
     setState(() {
-      _currentTime = "${_formatNumber(now.hour)} : ${_formatNumber(now.minute)}";
+      _currentTime =
+          "${_formatNumber(now.hour)} : ${_formatNumber(now.minute)}";
     });
   }
 
   String _formatNumber(int number) {
-    return number.toString().padLeft(2, '0'); // 确保两位数格式，例如 09:05
+    return number.toString().padLeft(2, '0'); // ensure two digit
   }
 
   @override
@@ -97,7 +98,7 @@ class _MainPageState extends State<MainPage> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: Colors.white, 
+              color: Colors.white,
               width: 4, // Circle's Width
             ),
           ),
@@ -126,7 +127,6 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
-
   String _getGreetingMessage() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) {
@@ -152,7 +152,8 @@ class _MainPageState extends State<MainPage> {
         if (!context.mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const MobileLogin(selectedRole: '')),
+          MaterialPageRoute(
+              builder: (context) => const MobileLogin(selectedRole: '')),
           (route) => false,
         );
       });
