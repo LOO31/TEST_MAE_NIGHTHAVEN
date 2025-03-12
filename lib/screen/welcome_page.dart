@@ -10,22 +10,31 @@ class WelcomePage extends StatefulWidget {
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  double _scale = 1.0; // Default scale value
-
-  void _onTapDown(TapDownDetails details) {
-    setState(() {
-      _scale = 0.9; // Shrink effect on tap
+  @override
+  void initState() {
+    super.initState();
+    // ⏳ 2秒后自动跳转
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) { 
+        _navigateWithFadeTransition();
+      }
     });
   }
 
-  void _onTapUp(TapUpDetails details) {
-    setState(() {
-      _scale = 1.0; // Restore size after tap
-    });
-    // Navigate to RoleSelection page
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const RoleSelection()),
+  void _navigateWithFadeTransition() {
+    Navigator.of(context).pushReplacement(_fadeRoute(const RoleSelection()));
+  }
+
+  PageRouteBuilder _fadeRoute(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(
+          opacity: animation, // 渐隐动画
+          child: child,
+        );
+      },
+      transitionDuration: const Duration(milliseconds: 500), // 动画时间
     );
   }
 
@@ -34,47 +43,37 @@ class _WelcomePageState extends State<WelcomePage> {
     return Scaffold(
       backgroundColor: const Color(0xFF253751), // Background color
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Make AppBar transparent
-        elevation: 0, // Remove shadow
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             image: DecorationImage(
-              image: AssetImage("assets/images/cloud.jpg"), // Your cloud image
-              fit: BoxFit.cover, // Cover the entire AppBar
+              image: AssetImage("assets/images/cloud.jpg"),
+              fit: BoxFit.cover,
             ),
           ),
         ),
       ),
       body: Stack(
         children: [
-          // Logo with animated tap effect
+          // Logo
           Positioned(
-            top: 200, // Adjust vertical position
-            left: 80, // Adjust horizontal position
-            child: GestureDetector(
-              onTapDown: _onTapDown, // Scale down when tapped
-              onTapUp: _onTapUp, // Scale back & navigate
-              child: AnimatedScale(
-                scale: _scale, // Apply scale animation
-                duration:
-                    const Duration(milliseconds: 100), // Fast smooth effect
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(30), // Adjust roundness
-                  child: Image.asset(
-                    'assets/images/NightHavenLogo.jpg', // Image path
-                    width: 277,
-                    height: 213,
-                    fit: BoxFit.cover, // Ensure the image fits well
-                  ),
-                ),
+            top: 200,
+            left: 80,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Image.asset(
+                'assets/images/NightHavenLogo.jpg',
+                width: 277,
+                height: 213,
+                fit: BoxFit.cover,
               ),
             ),
           ),
-
-          // "Good Night!" text positioned below the logo
+          // "Good Night!" text
           Positioned(
-            top: 460, // Adjust to move text up/down
-            left: 150, // Adjust to move text left/right
+            top: 460,
+            left: 150,
             child: Text(
               "Good Night!",
               style: GoogleFonts.leckerliOne(fontSize: 24, color: Colors.white),
