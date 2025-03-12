@@ -225,8 +225,8 @@ class _MainPageState extends State<MainPage> {
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
       backgroundColor: const Color(0xFF2D3142),
-      selectedItemColor: Colors.white,
-      unselectedItemColor: Colors.white70,
+      selectedItemColor: const Color.fromARGB(255, 0, 0, 0),
+      unselectedItemColor: const Color.fromARGB(179, 0, 0, 0),
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.bedtime), label: "Sleep"),
         BottomNavigationBarItem(

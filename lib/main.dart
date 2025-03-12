@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:mae_grp_assignment/screen/main_page.dart';
+import 'package:mae_grp_assignment/screen/role_selection.dart';
 import 'firebase_options.dart';
 import 'screen/welcome_page.dart';
 import 'screen/mobile_register.dart';
 import 'screen/mobile_login.dart';
+import 'admin/admin_dashboard.dart';
+import 'admin/admin_userManagement.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +36,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const MobileLogin(
               selectedRole: '',
             ),
+        '/admin': (context) => const AdminDashboard(),
+        '/adminUserManagement': (context) => const AdminUserManagement(), // 配置路由
       },
     );
   }

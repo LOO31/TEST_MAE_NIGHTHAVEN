@@ -39,6 +39,7 @@ dependencies:
   firebase_messaging: ^15.2.4  # Replace with the latest version
   bcrypt: ^1.1.3
   crypto: ^3.0.3
+  fluttertoast: ^8.0.9
 
 dev_dependencies:
   flutter_test:

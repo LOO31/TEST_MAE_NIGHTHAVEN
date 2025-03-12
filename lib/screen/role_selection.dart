@@ -93,8 +93,7 @@ class RoleSelection extends StatelessWidget {
         width: double.infinity, // Make the button take full width
         child: ElevatedButton(
           onPressed: () {
-            // Navigate to MobileLogin Page with selected role
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => MobileLogin(selectedRole: role),
