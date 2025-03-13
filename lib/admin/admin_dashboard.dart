@@ -5,7 +5,7 @@ import 'package:fluttertoast/fluttertoast.dart'; // For showing toast messages (
 import 'admin_userManagement.dart';
 
 class AdminDashboard extends StatefulWidget {
-  const AdminDashboard({super.key});
+  const AdminDashboard({super.key, required String email});
 
   @override
   State<AdminDashboard> createState() => _AdminDashboardState();
@@ -63,8 +63,11 @@ class _AdminDashboardState extends State<AdminDashboard> {
       await FirebaseAuth.instance.signOut();
 
       // Navigate to the role selection page after successful logout
-      Navigator.pushReplacementNamed(context, '/roleSelection');
-
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        '/roleSelection',
+        (Route<dynamic> route) => false, // 清空所有导航栈
+      );
       // Optional: Show a toast message for successful logout
       Fluttertoast.showToast(
           msg: "Successfully logged out!", toastLength: Toast.LENGTH_SHORT);
@@ -132,17 +135,26 @@ class _AdminDashboardState extends State<AdminDashboard> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           foregroundColor: Colors.white,
+          leading: _selectedIndex == 0
+              ? null // Dashboard 不需要返回按钮
+              : IconButton(
+                  icon: Icon(Icons.arrow_back),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                ),
           actions: [
             IconButton(
               icon: Icon(Icons.logout),
-              onPressed: _logout, // Logout on press
+              onPressed: _logout,
               tooltip: 'Logout',
             ),
           ],
         ),
         body: IndexedStack(
           index: _selectedIndex,
-          children: pages, // Use IndexedStack to ensure pages are not rebuilt unnecessarily
+          children:
+              pages, // Use IndexedStack to ensure pages are not rebuilt unnecessarily
         ),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
@@ -180,7 +192,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 }
-
 
 // 🚀 **Dashboard 页面**
 class DashboardScreen extends StatelessWidget {
@@ -259,8 +270,8 @@ class UserManagementScreen extends StatefulWidget {
 
 class _UserManagementScreenState extends State<UserManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<AdminUser> users = [];  // List of all users
-  List<AdminUser> filteredUsers = [];  // Filtered list of users
+  List<AdminUser> users = []; // List of all users
+  List<AdminUser> filteredUsers = []; // Filtered list of users
 
   @override
   void initState() {
@@ -268,40 +279,39 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     // Initialize the list of users (mock data or fetch from a database)
     users = [
       AdminUser(
-        name: 'John Doe',
-        email: 'john@example.com',
-        password: '1234',
-        phoneNumber: '1234567890',
-        avatarUrl:
-            'https://gw.alicdn.com/imgextra/i2/1913062162/O1CN015OCjUY1RqFBeD5q7b_!!1913062162.jpg_300x300Q75.jpg_.webp',
-        isDoctor: false),
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: '1234',
+          phoneNumber: '1234567890',
+          avatarUrl:
+              'https://gw.alicdn.com/imgextra/i2/1913062162/O1CN015OCjUY1RqFBeD5q7b_!!1913062162.jpg_300x300Q75.jpg_.webp',
+          isDoctor: false),
       AdminUser(
-        name: 'Dr. Jane Smith',
-        email: 'jane@example.com',
-        password: 'abcd',
-        phoneNumber: '0987654321',
-        avatarUrl:
-            'https://q0.itc.cn/q_70/images03/20240807/5a7118f6a75548c4970e3932b41a31cc.jpeg',
-        isDoctor: true),
+          name: 'Dr. Jane Smith',
+          email: 'jane@example.com',
+          password: 'abcd',
+          phoneNumber: '0987654321',
+          avatarUrl:
+              'https://q0.itc.cn/q_70/images03/20240807/5a7118f6a75548c4970e3932b41a31cc.jpeg',
+          isDoctor: true),
       AdminUser(
-        name: 'Xinyin',
-        email: 'jane@example.com',
-        password: 'abcd',
-        phoneNumber: '0987654321',
-        avatarUrl:
-            'https://img.itouxiang.com/m12/b0/21/3608e94ec245.jpg',
-        isDoctor: true),
+          name: 'Xinyin',
+          email: 'jane@example.com',
+          password: 'abcd',
+          phoneNumber: '0987654321',
+          avatarUrl: 'https://img.itouxiang.com/m12/b0/21/3608e94ec245.jpg',
+          isDoctor: true),
       AdminUser(
-        name: 'Xinyin',
-        email: 'jane@example.com',
-        password: 'abcd',
-        phoneNumber: '0987654321',
-        avatarUrl:
-            'https://q0.itc.cn/q_70/images03/20240807/5a7118f6a75548c4970e3932b41a31cc.jpeg',
-        isDoctor: true),
+          name: 'Xinyin',
+          email: 'jane@example.com',
+          password: 'abcd',
+          phoneNumber: '0987654321',
+          avatarUrl:
+              'https://q0.itc.cn/q_70/images03/20240807/5a7118f6a75548c4970e3932b41a31cc.jpeg',
+          isDoctor: true),
       // Add more users here
     ];
-    filteredUsers = List.from(users);  // Start with all users
+    filteredUsers = List.from(users); // Start with all users
   }
 
   void _filterUsers() {
@@ -390,7 +400,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               ],
             ),
             onTap: () {
-              widget.onUserTapped(user);  // Pass the selected user back
+              widget.onUserTapped(user); // Pass the selected user back
             },
           ),
         ),
@@ -421,7 +431,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(0, 140, 77, 77),
       appBar: AppBar(
-        title: null,  // Set title to null to remove it
+        title: null, // Set title to null to remove it
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.white,
@@ -457,7 +467,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
     );
   }
 }
-
 
 class ReportsScreen extends StatelessWidget {
   @override

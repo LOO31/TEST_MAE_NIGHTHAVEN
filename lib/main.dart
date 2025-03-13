@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:mae_grp_assignment/screen/main_page.dart';
-import 'package:mae_grp_assignment/screen/role_selection.dart';
 import 'firebase_options.dart';
 import 'screen/welcome_page.dart';
+import 'screen/role_selection.dart';
 import 'screen/mobile_register.dart';
 import 'screen/mobile_login.dart';
+import 'screen/main_page.dart';
 import 'admin/admin_dashboard.dart';
 import 'admin/admin_userManagement.dart';
 
@@ -29,15 +29,42 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const WelcomePage(), // set as first page
-        '/register': (context) => const MobileRegister(), // register page
-        '/login': (context) => const MobileLogin(
-              selectedRole: '',
-            ),
-        '/admin': (context) => const AdminDashboard(),
-        '/adminUserManagement': (context) => const AdminUserManagement(), // 配置路由
+      initialRoute: '/', // 默认进入 WelcomePage
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(builder: (context) => const WelcomePage());
+          case '/roleSelection':
+            return MaterialPageRoute(
+                builder: (context) => const RoleSelection());
+          case '/register':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            return MaterialPageRoute(
+              builder: (context) =>
+                  MobileRegister(selectedRole: args['selectedRole']),
+            );
+          case '/login':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            return MaterialPageRoute(
+              builder: (context) =>
+                  MobileLogin(selectedRole: args['selectedRole']),
+            );
+          case '/admin':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            return MaterialPageRoute(
+              builder: (context) => AdminDashboard(email: args['email']),
+            );
+          case '/user':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            return MaterialPageRoute(
+              builder: (context) => MainPage(email: args['email']),
+            );
+          case '/adminUserManagement':
+            return MaterialPageRoute(
+                builder: (context) => const AdminUserManagement());
+          default:
+            return MaterialPageRoute(builder: (context) => const WelcomePage());
+        }
       },
     );
   }

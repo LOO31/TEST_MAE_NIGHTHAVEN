@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'mobile_login.dart'; // Import the MobileLogin page
+import 'package:mae_grp_assignment/screen/mobile_register.dart';
 import 'welcome_page.dart';
 
 class RoleSelection extends StatelessWidget {
@@ -93,27 +93,28 @@ class RoleSelection extends StatelessWidget {
         width: double.infinity, // Make the button take full width
         child: ElevatedButton(
           onPressed: () {
+            // Pass the selected role to the Register page
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => MobileLogin(selectedRole: role),
+                builder: (context) => MobileRegister(selectedRole: role),
               ),
             );
           },
           style: ElevatedButton.styleFrom(
             padding: const EdgeInsets.symmetric(
-                vertical: 15), // Adjust button height
+                vertical: 30), // Adjust button height
             backgroundColor:
                 Colors.black.withAlpha(77), // Semi-transparent black button
             shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12)), // Rounded corners
-            elevation: 5, // Add shadow effect
+            elevation: 10, // Add shadow effect
           ),
           child: Text(
             role,
             style: GoogleFonts.poppins(
                 color: Colors.white,
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.w600), // Set text color to white
           ),
         ),
@@ -124,7 +125,7 @@ class RoleSelection extends StatelessWidget {
   Widget _buildDivider() {
     return const Padding(
       padding: EdgeInsets.symmetric(
-          vertical: 5.0, horizontal: 40), // Add spacing around the divider
+          vertical: 6.0, horizontal: 40), // Add spacing around the divider
       child: Divider(
           color: Colors.white54,
           thickness: 0.5), // Set divider color and thickness

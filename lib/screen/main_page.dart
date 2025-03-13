@@ -1,10 +1,10 @@
 import 'dart:async'; // Suitable for Timer
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'mobile_login.dart';
+import 'role_selection.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key});
+  const MainPage({super.key, required String email});
 
   @override
   _MainPageState createState() => _MainPageState();
@@ -153,7 +153,7 @@ class _MainPageState extends State<MainPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-              builder: (context) => const MobileLogin(selectedRole: '')),
+              builder: (context) => const RoleSelection()),
           (route) => false,
         );
       });
