@@ -1,88 +1,97 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '/admin/admin_dashboard.dart';
-import 'mobile_register.dart';
-import 'main_page.dart'; // Import main page
 import 'package:firebase_auth/firebase_auth.dart';
-import 'role_selection.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../admin/admin_dashboard.dart';
+import 'main_page.dart';
+import 'mobile_register.dart';
 
 class MobileLogin extends StatefulWidget {
-  final String selectedRole;
+  final String? email; 
 
-  const MobileLogin({super.key, required this.selectedRole});
+  const MobileLogin({super.key, this.email, required selectedRole});
 
   @override
   State<MobileLogin> createState() => _MobileLoginState();
 }
 
 class _MobileLoginState extends State<MobileLogin> {
-  late TextEditingController _usernameController;
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final FocusNode _usernameFocus = FocusNode();
-  bool _isPasswordVisible = false; // Toggle for password visibility
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _usernameController = TextEditingController(text: widget.selectedRole);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Show logout success message when returning from MainPage
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Logout successful")),
-      );
-    });
-
-    _usernameFocus.addListener(() {
-      if (_usernameFocus.hasFocus &&
-          _usernameController.text == widget.selectedRole) {
-        _usernameController.clear();
-      } else if (!_usernameFocus.hasFocus && _usernameController.text.isEmpty) {
-        _usernameController.text = widget.selectedRole;
-      }
-    });
+    if (widget.email != null) {
+      _emailController.text = widget.email!;
+    }
   }
 
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _passwordController.dispose();
-    _usernameFocus.dispose();
-    super.dispose();
-  }
+  // User Login Logic
+  void _loginUser() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-  void _handleLogin() async {
-    String email = _usernameController.text.trim();
+    String email = _emailController.text.trim();
     String password = _passwordController.text.trim();
 
-    if (email.isNotEmpty && password.isNotEmpty) {
-      try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
+    if (email.isEmpty || password.isEmpty) {
+      setState(() {
+        _errorMessage = "Email and Password cannot be empty!";
+        _isLoading = false;
+      });
+      return;
+    }
 
-        if (!mounted) return;
+    try {
+      // Firebase Credential
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: email, password: password);
 
-        if (widget.selectedRole.toLowerCase() == 'admin') {
-          Navigator.pushReplacementNamed(context, '/admin'); // ✅ 确保继承全局主题
-        } else {
-          Navigator.pushReplacementNamed(
-              context, '/main'); // ✅ 其他用户跳转到 MainPage
-        }
-      } on FirebaseAuthException catch (e) {
-        if (!mounted) return;
+      String uid = userCredential.user!.uid;
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? "Login failed")),
+      // Quer Firestore to get characteristics
+      QuerySnapshot userQuery = await FirebaseFirestore.instance
+          .collection('users')
+          .where('auth_uid', isEqualTo: uid)
+          .limit(1)
+          .get();
+
+      if (userQuery.docs.isEmpty) {
+        setState(() {
+          _errorMessage = "User not found in Firestore!";
+          _isLoading = false;
+        });
+        return;
+      }
+
+      DocumentSnapshot userDoc = userQuery.docs.first;
+      // Get user role from firebase
+      String userRole = userDoc['role']; 
+
+      // Switch User
+      Widget nextPage;
+      if (userRole == 'Admin') {
+        nextPage = AdminDashboard(email: email);
+      } else {
+        nextPage = MainPage(email: email);
+      }
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => nextPage),
         );
       }
-    } else {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter email and password")),
-      );
+    } catch (e) {
+      setState(() {
+        _errorMessage = "Login failed: ${e.toString()}";
+        _isLoading = false;
+      });
     }
   }
 
@@ -91,19 +100,10 @@ class _MobileLoginState extends State<MobileLogin> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("Mobile Login"),
+        title:
+            const Text("Mobile Login", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const RoleSelection()),
-            );
-          },
-        ),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -119,71 +119,22 @@ class _MobileLoginState extends State<MobileLogin> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              Center(
-                child: Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  child: Image.asset("assets/images/NightHavenLogo.jpg",
-                      fit: BoxFit.cover),
-                ),
-              ),
+              _buildLogo(),
               const SizedBox(height: 20),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Sign In",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              _buildTitle(),
               const SizedBox(height: 20),
-              _buildTextField(
-                  controller: _usernameController,
-                  focusNode: _usernameFocus,
-                  hintText: "User"),
+              _buildTextField("Email", controller: _emailController),
               const SizedBox(height: 15),
-              _buildPasswordField(),
+              _buildTextField("Password",
+                  controller: _passwordController, isPassword: true),
               const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const MobileRegister()),
-                  ),
-                  child: Text("Sign Up",
-                      style: GoogleFonts.poppins(
-                          color: Colors.white70, fontSize: 14)),
-                ),
-              ),
+              if (_errorMessage != null)
+                Text(_errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 14)),
+              const SizedBox(height: 10),
+              _buildSignUpPrompt(),
               const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    backgroundColor: Colors.purple,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: Text(
-                    "Sign In",
-                    style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
+              _buildLoginButton(),
             ],
           ),
         ),
@@ -191,18 +142,45 @@ class _MobileLoginState extends State<MobileLogin> {
     );
   }
 
-  Widget _buildTextField(
-      {required TextEditingController controller,
-      FocusNode? focusNode,
-      required String hintText}) {
+  // Logo
+  Widget _buildLogo() {
+    return Center(
+      child: Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(40),
+        ),
+        child:
+            Image.asset("assets/images/NightHavenLogo.jpg", fit: BoxFit.cover),
+      ),
+    );
+  }
+
+  // Title
+  Widget _buildTitle() {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        "Sign In",
+        style: GoogleFonts.poppins(
+            color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  // Input Field
+  Widget _buildTextField(String hint,
+      {bool isPassword = false, TextEditingController? controller}) {
     return TextField(
       controller: controller,
-      focusNode: focusNode,
+      obscureText: isPassword,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.white10,
-        hintText: hintText,
+        hintText: hint,
         hintStyle: const TextStyle(color: Colors.white70),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -212,31 +190,44 @@ class _MobileLoginState extends State<MobileLogin> {
     );
   }
 
-  Widget _buildPasswordField() {
-    return TextField(
-      controller: _passwordController,
-      obscureText: !_isPasswordVisible,
-      style: const TextStyle(color: Colors.white),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white10,
-        hintText: "Password",
-        hintStyle: const TextStyle(color: Colors.white70),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        suffixIcon: IconButton(
-          icon: Icon(
-            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-            color: Colors.white70,
+  // Registration Hints
+  Widget _buildSignUpPrompt() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Don't have an account?",
+            style: TextStyle(color: Colors.white70)),
+        TextButton(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MobileRegister()),
           ),
-          onPressed: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
+          child: Text("Sign Up",
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
         ),
+      ],
+    );
+  }
+
+  // Login Button
+  Widget _buildLoginButton() {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _loginUser,
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 15),
+          backgroundColor: Colors.purple,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : Text("Sign In",
+                style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
       ),
     );
   }
