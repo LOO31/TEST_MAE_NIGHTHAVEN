@@ -40,6 +40,9 @@ dependencies:
   bcrypt: ^1.1.3
   crypto: ^3.0.3
   fluttertoast: ^8.0.9
+  flutter_time_picker_spinner: ^2.0.0 #好像没有运用到
+  audioplayers: ^5.2.1 #play music
+  syncfusion_flutter_gauges: ^28.2.11
 
 dev_dependencies:
   flutter_test:
@@ -72,6 +75,19 @@ flutter:
   assets:
     - assets/images/NightHavenLogo.jpg
     - assets/images/cloud.jpg
+    - assets/images/sleep.jpg
+    - assets/images/music.webp
+
+    - assets/audio/romantic.mp3
+    - assets/audio/christmas.mp3
+    - assets/audio/dream.mp3
+    - assets/audio/hiphop.mp3
+    - assets/audio/holiday.mp3
+    - assets/audio/relax.mp3
+    - assets/audio/yoga.mp3
+    - assets/audio/newstart.mp3
+    - assets/audio/blueday.mp3
+    - assets/audio/nightsky.mp3
 
   fonts:
     - family: LeckerliOne
