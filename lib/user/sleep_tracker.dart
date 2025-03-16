@@ -17,6 +17,7 @@ class _SleepTrackerState extends State<SleepTracker> {
   TimeOfDay alarmTime = TimeOfDay(hour: 7, minute: 0);
   double sleepDuration = 8;
   int musicDuration = 15;
+  String chosenMusic = "No music selected";
 
   TimeOfDay get bedtime {
     int hour = alarmTime.hour - sleepDuration.toInt();
@@ -136,10 +137,18 @@ class _SleepTrackerState extends State<SleepTracker> {
           SizedBox(height: 20),
           _buildListTile(
               'Sleep Duration', '${sleepDuration.toInt()} hr', Icons.timer),
-          _buildListTile('Choose Music', '$musicDuration min', Icons.music_note,
-              () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SelectMusicPage()));
+          _buildListTile('Choose Music', chosenMusic, Icons.music_note,
+              () async {
+            final selectedMusic = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SelectMusicPage()),
+            );
+
+            if (selectedMusic != null) {
+              setState(() {
+                chosenMusic = selectedMusic; // Store selected music
+              });
+            }
           }),
           SizedBox(height: 20),
           ElevatedButton(
@@ -153,7 +162,8 @@ class _SleepTrackerState extends State<SleepTracker> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => AlarmNotificationPage()),
+                    builder: (context) =>
+                        AlarmNotificationPage(selectedMusic: chosenMusic)),
               );
             },
             child: Text('Start', style: TextStyle(fontSize: 18)),

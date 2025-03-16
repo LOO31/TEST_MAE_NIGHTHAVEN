@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'role_selection.dart';
 import '/user/sleep_tracker.dart';
+import '/user/profile_setting.dart';
 
 class MainPage extends StatefulWidget {
   final String email;
@@ -89,7 +90,12 @@ class _MainPageState extends State<MainPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileSettings()),
+            );
+          },
         ),
         actions: [
           IconButton(

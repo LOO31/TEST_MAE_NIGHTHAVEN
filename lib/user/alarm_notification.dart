@@ -1,22 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'dart:async';
 import 'dart:math';
 
 class AlarmNotificationPage extends StatefulWidget {
+  final String selectedMusic;
+
+  AlarmNotificationPage({required this.selectedMusic});
+
   @override
   _AlarmNotificationPageState createState() => _AlarmNotificationPageState();
 }
 
 class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
   double progress = 0.0;
-  int totalTime = 240; // Total time in seconds (4 minutes)
+  int totalTime = 240; // 4 minutes
   int remainingTime = 240;
   Timer? timer;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  bool isPlaying = false;
 
   @override
   void initState() {
     super.initState();
     startTimer();
+    playMusic(widget.selectedMusic); // Start playing music when page loads
   }
 
   void startTimer() {
@@ -32,19 +40,50 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
     });
   }
 
+  Future<void> playMusic(String musicPath) async {
+    try {
+      await _audioPlayer.setReleaseMode(ReleaseMode.stop);
+      await _audioPlayer.setVolume(1.0);
+      await _audioPlayer.play(AssetSource("audio/$musicPath"));
+      print("Now playing: $musicPath");
+    } catch (e) {
+      print("Error playing audio: $e");
+    }
+  }
+
+  void stopMusic() async {
+    await _audioPlayer.stop();
+    setState(() {
+      isPlaying = false;
+    });
+  }
+
+  void toggleMusic() {
+    print("Selected music file: ${widget.selectedMusic}"); // 检查是否正确传值
+    if (isPlaying) {
+      _audioPlayer.pause();
+    } else {
+      playMusic(widget.selectedMusic); // 使用 `widget.selectedMusic`
+    }
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+  }
+
   void stopAlarm() {
     timer?.cancel();
+    stopMusic();
     setState(() {
       remainingTime = 0;
       progress = 1.0;
     });
-    print("Alarm Stopped");
     Navigator.pop(context);
   }
 
   @override
   void dispose() {
     timer?.cancel();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -56,13 +95,14 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Back button
+            // Back Button
             Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
                 icon: Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () {
-                  Navigator.pop(context);
+                  stopMusic();
+                  Navigator.pop(context, widget.selectedMusic);
                 },
               ),
             ),
@@ -82,7 +122,7 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
 
             SizedBox(height: 10),
 
-            // Greeting Text
+            // Greeting
             Center(
               child: Text(
                 "Good Night",
@@ -118,7 +158,7 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
 
             SizedBox(height: 20),
 
-            // Music Player & Alarm Time (ALARM MOVED BELOW MUSIC)
+            // Music Player & Alarm Time
             Column(
               children: [
                 // Music Player
@@ -140,22 +180,36 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text("Song",
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 14),
-                                overflow: TextOverflow.ellipsis),
-                            Text("Playing • 10 min",
-                                style: TextStyle(
-                                    color: Colors.white70, fontSize: 12),
-                                overflow: TextOverflow.ellipsis),
+                            Text(
+                              widget.selectedMusic.split('/').last,
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 14),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              isPlaying ? "Playing • 10 min" : "Paused",
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ],
                         ),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          isPlaying
+                              ? Icons.pause_circle_filled
+                              : Icons.play_circle_filled,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                        onPressed: toggleMusic,
                       ),
                     ],
                   ),
                 ),
 
-                SizedBox(height: 10), // Spacing between Music and Alarm
+                SizedBox(height: 10),
 
                 // Alarm Time
                 Container(
@@ -181,12 +235,8 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
 
             SizedBox(height: 30),
 
-            // **Swipe Up to Stop** Gesture
+            // Swipe Up to Stop
             GestureDetector(
-              onVerticalDragUpdate: (details) {
-                // Debugging information
-                print("Drag detected: ${details.primaryDelta}");
-              },
               onVerticalDragEnd: (details) {
                 if (details.primaryVelocity != null &&
                     details.primaryVelocity! < -50) {

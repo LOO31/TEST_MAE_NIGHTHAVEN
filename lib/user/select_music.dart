@@ -61,9 +61,20 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
         ),
         title: Text("Music Select", style: TextStyle(color: Colors.white54)),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
+          TextButton(
+            onPressed: () {
+              if (selectedMusic.isNotEmpty) {
+                // 确保用户选择了音乐
+                Navigator.pop(context, selectedMusic);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text("Music chosen success!")),
+                );
+              }
+            },
+            child: Text(
+              "Choose",
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
           ),
         ],
       ),

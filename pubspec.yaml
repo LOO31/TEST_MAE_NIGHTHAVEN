@@ -30,18 +30,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  #UI & Icon
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8  # The following adds the Cupertino Icons font to your application.# Use with the CupertinoIcons class for iOS style icons.
+  #firebase services
   firebase_core: ^3.12.1  # Firebase dependencies - Replace "x.x.x" with the latest stable versions# Replace with the latest version
   firebase_auth: ^5.5.1  # Replace with the latest version
   cloud_firestore: ^5.6.5  # Replace with the latest version
   firebase_storage: ^12.4.4  # Replace with the latest version
   firebase_messaging: ^15.2.4  # Replace with the latest version
+  #security & encryption
   bcrypt: ^1.1.3
   crypto: ^3.0.3
+  #ui & Enhancement
   fluttertoast: ^8.0.9
   flutter_time_picker_spinner: ^2.0.0 #好像没有运用到
-  audioplayers: ^5.2.1 #play music
+  audioplayers: ^6.4.0 #play music
   syncfusion_flutter_gauges: ^28.2.11
 
 dev_dependencies:
@@ -77,7 +81,7 @@ flutter:
     - assets/images/cloud.jpg
     - assets/images/sleep.jpg
     - assets/images/music.webp
-
+    - assets/images/profile.jpg
     - assets/audio/romantic.mp3
     - assets/audio/christmas.mp3
     - assets/audio/dream.mp3
