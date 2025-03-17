@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'role_selection.dart';
 import '/user/sleep_tracker.dart';
 import '/user/profile_setting.dart';
+import '/user/diary.dart';
 
 class MainPage extends StatefulWidget {
   final String email;
@@ -22,6 +23,7 @@ class _MainPageState extends State<MainPage> {
   bool _showConnectedDevices =
       false; // Controls whether the device list is displayed
   String? _connectedDevice;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -323,7 +325,14 @@ class _MainPageState extends State<MainPage> {
       backgroundColor: const Color(0xFF4A148C),
       selectedItemColor: Colors.black,
       unselectedItemColor: const Color(0xFF9C27B0),
+      type: BottomNavigationBarType.fixed, // 确保所有标签可见
+      showUnselectedLabels: true, // 确保未选中项的标签也可见
+      currentIndex: _selectedIndex, // 添加当前索引
       onTap: (index) {
+        setState(() {
+          _selectedIndex = index; // 更新索引
+        });
+
         if (index == 0) {
           Navigator.push(
             context,
@@ -331,14 +340,21 @@ class _MainPageState extends State<MainPage> {
               builder: (context) => SleepTracker(email: widget.email),
             ),
           );
+        } else if (index == 1) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DiaryScreen(),
+            ),
+          );
         }
+        // 其他页面的跳转逻辑可以在这里加上
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.bedtime), label: "Sleep"),
+        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Diary"),
         BottomNavigationBarItem(
-            icon: Icon(Icons.favorite), label: "Diary & Emotion"),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services), label: "AI & Doctor"),
+            icon: Icon(Icons.medical_services), label: "AI"),
         BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Report"),
       ],
     );

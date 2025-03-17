@@ -47,6 +47,7 @@ dependencies:
   flutter_time_picker_spinner: ^2.0.0 #好像没有运用到
   audioplayers: ^6.4.0 #play music
   syncfusion_flutter_gauges: ^28.2.11
+  table_calendar: ^3.0.9
 
 dev_dependencies:
   flutter_test:
