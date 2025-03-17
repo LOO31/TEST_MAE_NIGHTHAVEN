@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+
+// Import screens
 import 'screen/welcome_page.dart';
 import 'screen/role_selection.dart';
 import 'screen/mobile_register.dart';
@@ -8,6 +10,12 @@ import 'screen/mobile_login.dart';
 import 'screen/main_page.dart';
 import 'admin/admin_dashboard.dart';
 import 'admin/admin_userManagement.dart';
+
+// Import user-related screens
+import '/user/sleep_tracker.dart';
+import '/user/diary.dart';
+import '/user/ai_doctor_service.dart';
+// import '/user/report_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +39,9 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/', // 默认进入 WelcomePage
       onGenerateRoute: (settings) {
+        final args =
+            settings.arguments as Map<String, dynamic>? ?? {}; // 确保 args 不为空
+
         switch (settings.name) {
           case '/':
             return MaterialPageRoute(builder: (context) => const WelcomePage());
@@ -62,6 +73,26 @@ class MyApp extends StatelessWidget {
           case '/adminUserManagement':
             return MaterialPageRoute(
                 builder: (context) => const AdminUserManagement());
+
+          // routes for user features
+          case '/sleepTracker':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            return MaterialPageRoute(
+              builder: (context) => SleepTracker(email: args['email']),
+            );
+          case '/diary':
+            return MaterialPageRoute(
+              builder: (context) =>
+                  DiaryEmotionScreen(email: args['email'] ?? ''),
+            );
+          case '/aiDoctor':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            return MaterialPageRoute(
+              builder: (context) => AIDoctorService(email: args['email']),
+            );
+          // case '/report':
+          //   return MaterialPageRoute(builder: (context) => ReportScreen());
+
           default:
             return MaterialPageRoute(builder: (context) => const WelcomePage());
         }

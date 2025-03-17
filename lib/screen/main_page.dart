@@ -7,6 +7,7 @@ import 'role_selection.dart';
 import '/user/sleep_tracker.dart';
 import '/user/profile_setting.dart';
 import '/user/diary.dart';
+import '/user/ai_doctor_service.dart';
 
 class MainPage extends StatefulWidget {
   final String email;
@@ -344,11 +345,17 @@ class _MainPageState extends State<MainPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => DiaryScreen(),
+              builder: (context) => DiaryEmotionScreen(email: widget.email),
+            ),
+          );
+        } else if (index == 2) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AIDoctorService(email: widget.email),
             ),
           );
         }
-        // 其他页面的跳转逻辑可以在这里加上
       },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.bedtime), label: "Sleep"),
