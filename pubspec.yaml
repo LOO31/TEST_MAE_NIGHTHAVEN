@@ -83,6 +83,7 @@ flutter:
     - assets/images/sleep.jpg
     - assets/images/music.webp
     - assets/images/profile.jpg
+    - assets/images/aichatbot.jpg
     - assets/audio/romantic.mp3
     - assets/audio/christmas.mp3
     - assets/audio/dream.mp3
