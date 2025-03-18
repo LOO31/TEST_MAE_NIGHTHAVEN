@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DiaryEmotionScreen extends StatefulWidget {
   final String email;
@@ -17,19 +19,93 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
   bool _isDiary = true;
   TextEditingController _diaryController = TextEditingController();
   int _selectedIndex = 1;
-  List<String> emojis = [
-    '😊',
-    '😢',
-    '😡',
-    '😱',
-    '😌',
-    '😍',
-    '🤯',
-    '😭',
-    '😂',
-    '🥳'
+  List<Map<String, String>> emotions = [
+    {"emoji": "😊", "name": "Happy"},
+    {"emoji": "😢", "name": "Sad"},
+    {"emoji": "😡", "name": "Angry"},
+    {"emoji": "😱", "name": "Shocked"},
+    {"emoji": "😌", "name": "Relaxed"},
+    {"emoji": "😍", "name": "Love"},
+    {"emoji": "🤯", "name": "Mind Blown"},
+    {"emoji": "😭", "name": "Crying"},
+    {"emoji": "😂", "name": "Laughing"},
+    {"emoji": "🥳", "name": "Celebrating"},
   ];
+
   String? selectedEmoji;
+  String? selectedEmotionName;
+
+  Future<String?> _getCustomUid() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+
+    try {
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection("users")
+          .where("auth_uid", isEqualTo: user.uid) // Query using `auth_uid`
+          .limit(1)
+          .get();
+
+      if (query.docs.isNotEmpty) {
+        return query.docs.first.id; // Retrieve customUid
+      } else {
+        print("Custom ID not found for user.");
+      }
+    } catch (e) {
+      print("Error fetching custom ID: $e");
+    }
+    return null;
+  }
+
+  Future<void> _saveDiaryEntry() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("User not logged in!")));
+      return;
+    }
+
+    if (_diaryController.text.trim().isEmpty && selectedEmotionName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Diary and emotion cannot be empty!")));
+      return;
+    }
+
+    String? userId = await _getCustomUid();
+    if (userId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Custom ID not found!")));
+      return;
+    }
+
+    String formattedDate =
+        "${_selectedDay.year}-${_selectedDay.month}-${_selectedDay.day}";
+
+    Map<String, dynamic> diaryData = {
+      "diary": _diaryController.text.trim(),
+      "emotion": selectedEmotionName,
+      "emoji": selectedEmoji ?? "❓",
+      "timestamp": FieldValue.serverTimestamp(),
+    };
+
+    await FirebaseFirestore.instance
+        .collection("diary") // 访问 `diary` 集合
+        .doc(userId) // 以 `userId` 作为文档 ID
+        .set({
+      formattedDate: diaryData // 直接存日期为字段
+    }, SetOptions(merge: true)); // 使用 `merge` 以避免覆盖其他日期的数据
+
+    _diaryController.clear();
+    setState(() {
+      selectedEmoji = null;
+      selectedEmotionName = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text("Saved Successfully!"), duration: Duration(seconds: 2)),
+    );
+  }
 
   void _onItemTapped(int index) {
     if (index == _selectedIndex) return;
@@ -172,11 +248,21 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
         });
       },
       headerStyle: HeaderStyle(
-          titleCentered: true,
-          titleTextStyle: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-      calendarStyle:
-          CalendarStyle(defaultTextStyle: TextStyle(color: Colors.white)),
+        titleCentered: true,
+        titleTextStyle: TextStyle(
+            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      calendarStyle: CalendarStyle(
+        defaultTextStyle: TextStyle(color: Colors.white),
+        selectedDecoration: BoxDecoration(
+          color: Colors.purpleAccent,
+          shape: BoxShape.circle,
+        ),
+        todayDecoration: BoxDecoration(
+          color: Colors.deepPurple,
+          shape: BoxShape.circle,
+        ),
+      ),
     );
   }
 
@@ -190,15 +276,27 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
             maxLines: 4,
             style: TextStyle(color: Colors.white),
             decoration: InputDecoration(
-                hintText: 'Write your diary...',
-                hintStyle: TextStyle(color: Colors.white70)),
+              hintText: 'Write your diary...',
+              hintStyle: TextStyle(color: Colors.white70),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Colors.white, width: 2),
+              ),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.1),
+            ),
           ),
           SizedBox(height: 10),
           ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent),
-              child: Text('Save', style: TextStyle(color: Colors.white))),
+            onPressed: () {
+              _saveDiaryEntry();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.purpleAccent,
+              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+            ),
+            child: Text('Save', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -208,53 +306,66 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
   Widget _buildEmotionSelector() {
     return Column(
       children: [
-        // Wrap inside SingleChildScrollView for horizontal scrolling
         SingleChildScrollView(
-          scrollDirection: Axis.horizontal, // Horizontal scrolling
+          scrollDirection: Axis.horizontal,
           child: Wrap(
             spacing: 15,
-            runSpacing: 15, // Emojis will wrap when they exceed the width
+            runSpacing: 15,
             alignment: WrapAlignment.center,
-            children: emojis.map((emoji) {
+            children: emotions.map((emojiMap) {
+              bool isSelected = selectedEmoji == emojiMap["emoji"];
               return GestureDetector(
                 onTap: () {
                   setState(() {
-                    selectedEmoji = emoji;
+                    selectedEmoji = emojiMap["emoji"];
+                    selectedEmotionName = emojiMap["name"];
                   });
                 },
-                child: Container(
-                  padding: EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: selectedEmoji == emoji
-                        ? Colors.purpleAccent
-                        : Colors.purpleAccent.withAlpha((0.2 * 255).toInt()),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: Text(
-                    emoji,
-                    style: TextStyle(
-                      fontSize: 40,
-                      color:
-                          selectedEmoji == emoji ? Colors.black : Colors.white,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.purpleAccent
+                            : Colors.purpleAccent.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Text(
+                        emojiMap["emoji"]!,
+                        style: TextStyle(
+                          fontSize: 40,
+                          color: isSelected ? Colors.black : Colors.white,
+                        ),
+                      ),
                     ),
-                  ),
+                    SizedBox(height: 5),
+                    Text(
+                      emojiMap["name"]!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               );
             }).toList(),
           ),
         ),
         SizedBox(height: 30),
-
-        // Save Button
         Center(
           child: ElevatedButton(
             onPressed: selectedEmoji == null
                 ? null
-                : () {
+                : () async {
+                    await _saveDiaryEntry();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Emotion saved: $selectedEmoji'),
+                        content: Text(
+                            'Emotion saved: $selectedEmoji ($selectedEmotionName)'),
                         duration: Duration(seconds: 2),
                       ),
                     );
