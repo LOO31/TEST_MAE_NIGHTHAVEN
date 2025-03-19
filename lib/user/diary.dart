@@ -58,53 +58,71 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
   }
 
   Future<void> _saveDiaryEntry() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
+    try {
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("User not logged in!")));
+        return;
+      }
+
+      bool isDiaryEmpty = _diaryController.text.trim().isEmpty;
+      bool isEmotionEmpty = selectedEmotionName == null;
+
+      if (isDiaryEmpty && isEmotionEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Diary and emotion cannot be empty!")));
+        return;
+      }
+
+      // 获取用户自定义 UID
+      String? userId;
+      try {
+        userId = await _getCustomUid();
+      } catch (e) {
+        print("Error fetching custom UID: $e");
+      }
+
+      if (userId == null) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text("Custom ID not found!")));
+        return;
+      }
+
+      String formattedDate =
+          "${_selectedDay.year}-${_selectedDay.month.toString().padLeft(2, '0')}-${_selectedDay.day.toString().padLeft(2, '0')}";
+
+      // 仅存储不为空的字段
+      Map<String, dynamic> diaryData = {
+        if (!isDiaryEmpty) "diary": _diaryController.text.trim(),
+        if (!isEmotionEmpty) "emotion": selectedEmotionName,
+        if (selectedEmoji != null) "emoji": selectedEmoji,
+        "timestamp": FieldValue.serverTimestamp(),
+      };
+
+      // 写入 Firestore
+      await FirebaseFirestore.instance
+          .collection("diary")
+          .doc(userId)
+          .set({formattedDate: diaryData}, SetOptions(merge: true));
+
+      print("Diary entry saved successfully: $diaryData");
+
+      // 清空输入
+      _diaryController.clear();
+      setState(() {
+        selectedEmoji = null;
+        selectedEmotionName = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Saved Successfully!"),
+          duration: Duration(seconds: 2)));
+    } catch (e) {
+      print("Error saving diary entry: $e");
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("User not logged in!")));
-      return;
+          .showSnackBar(SnackBar(content: Text("Failed to save diary entry!")));
     }
-
-    if (_diaryController.text.trim().isEmpty && selectedEmotionName == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Diary and emotion cannot be empty!")));
-      return;
-    }
-
-    String? userId = await _getCustomUid();
-    if (userId == null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("Custom ID not found!")));
-      return;
-    }
-
-    String formattedDate =
-        "${_selectedDay.year}-${_selectedDay.month}-${_selectedDay.day}";
-
-    Map<String, dynamic> diaryData = {
-      "diary": _diaryController.text.trim(),
-      "emotion": selectedEmotionName,
-      "emoji": selectedEmoji ?? "❓",
-      "timestamp": FieldValue.serverTimestamp(),
-    };
-
-    await FirebaseFirestore.instance
-        .collection("diary") // 访问 `diary` 集合
-        .doc(userId) // 以 `userId` 作为文档 ID
-        .set({
-      formattedDate: diaryData // 直接存日期为字段
-    }, SetOptions(merge: true)); // 使用 `merge` 以避免覆盖其他日期的数据
-
-    _diaryController.clear();
-    setState(() {
-      selectedEmoji = null;
-      selectedEmotionName = null;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text("Saved Successfully!"), duration: Duration(seconds: 2)),
-    );
   }
 
   void _onItemTapped(int index) {

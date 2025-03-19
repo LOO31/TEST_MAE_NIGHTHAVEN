@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'ai_chat_page.dart';
+import 'doctor_list.dart';
 
 class AIDoctorService extends StatefulWidget {
   final String email;
@@ -57,13 +58,13 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
             fontSize: 18,
             fontWeight: FontWeight.bold,
             fontStyle: FontStyle.italic,
-            color: Colors.white, //title color
+            color: Colors.white, // title color
           ),
         ),
-        leading: IconButton(
-          icon: Icon(Icons.menu, color: Colors.white),
+        leading: BackButton(
+          color: Colors.white, // back icon's color
           onPressed: () {
-            Scaffold.of(context).openDrawer();
+            Navigator.pop(context); // back to prev page
           },
         ),
         actions: [
@@ -74,8 +75,8 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
         ],
       ),
       body: Container(
-        width: double.infinity, // ✅ 让背景填满整个屏幕宽度
-        height: double.infinity, // ✅ 让背景填满整个屏幕高度
+        width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -109,7 +110,10 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
                   minimumSize: const Size(200, 50),
                 ),
                 onPressed: () {
-                  // Implement doctor consultation navigation
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => DoctorListPage()),
+                  );
                 },
                 child:
                     const Text('Doctor', style: TextStyle(color: Colors.white)),
