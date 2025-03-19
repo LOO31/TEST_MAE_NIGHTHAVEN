@@ -84,6 +84,9 @@ flutter:
     - assets/images/music.webp
     - assets/images/profile.jpg
     - assets/images/aichatbot.jpg
+    - assets/images/doctor1.jpg
+    - assets/images/doctor2.jpg
+    - assets/images/doctor3.jpg
     - assets/audio/romantic.mp3
     - assets/audio/christmas.mp3
     - assets/audio/dream.mp3
