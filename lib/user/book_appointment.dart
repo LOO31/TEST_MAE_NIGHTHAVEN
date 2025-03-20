@@ -7,7 +7,7 @@ import 'appointment_list_page.dart';
 class BookAppointmentPage extends StatefulWidget {
   final doctor;
 
-  BookAppointmentPage({required this.doctor});
+  BookAppointmentPage({required this.doctor, Key? key}) : super(key: key);
 
   @override
   _BookAppointmentPageState createState() => _BookAppointmentPageState();
@@ -15,16 +15,20 @@ class BookAppointmentPage extends StatefulWidget {
 
 class _BookAppointmentPageState extends State<BookAppointmentPage> {
   final _formKey = GlobalKey<FormState>();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _problemController =
-      TextEditingController(); // Added Problem input field
+  final TextEditingController _problemController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
 
-  // Select date
   void _selectDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -35,11 +39,11 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     if (pickedDate != null) {
       setState(() {
         selectedDate = pickedDate;
+        _dateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
       });
     }
   }
 
-  // Select time
   void _selectTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -48,258 +52,434 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     if (pickedTime != null) {
       setState(() {
         selectedTime = pickedTime;
+        _timeController.text = pickedTime.format(context);
       });
     }
   }
 
-  // Retrieve custom user_id (e.g., "u1", "u2") from Firestore
-  Future<String?> _getCustomUid() async {
+  Future<String> _getCustomUid() async {
     User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return null;
+    if (user == null) throw Exception("User not logged in");
 
     try {
       QuerySnapshot query = await FirebaseFirestore.instance
           .collection("users")
-          .where("auth_uid", isEqualTo: user.uid) // Query based on `auth_uid`
+          .where("auth_uid", isEqualTo: user.uid)
           .limit(1)
           .get();
 
       if (query.docs.isNotEmpty) {
-        return query.docs.first.id; // Get custom user_id
+        return query.docs.first.id; // Get customUserId (u1, u2, etc.)
       } else {
-        print("Custom user ID not found.");
+        throw Exception("Custom ID not found for user.");
       }
     } catch (e) {
-      print("Error fetching custom user ID: $e");
+      throw Exception("Error fetching custom UID: $e");
     }
-    return null;
   }
 
-  // Submit appointment form
-  // 提交预约表单
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      if (selectedDate == null || selectedTime == null) {
+  Future<void> _submitAppointment() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please fill in all the information")),
+      );
+      return;
+    }
+
+    if (selectedDate == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a date")),
+      );
+      return;
+    }
+
+    if (selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a time")),
+      );
+      return;
+    }
+
+    try {
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Please select date and time")),
+          const SnackBar(content: Text("User not logged in!")),
         );
         return;
       }
 
-      String? customUserId = await _getCustomUid();
-      if (customUserId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("User data not found!")),
-        );
-        return;
-      }
+      // 获取用户的 Custom UID（例如 u1, u2）
+      String customUid = await _getCustomUid();
 
+      // 格式化日期和时间
       String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
-      String formattedTime = selectedTime!.format(context);
+      String formattedTime =
+          "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}";
 
-      // 构建要存储的预约数据
-      Map<String, dynamic> appointmentData = {
-        "user_id": customUserId,
+      // 生成唯一的预约 ID
+      String appointmentId = "${formattedDate}_$formattedTime";
+
+      // Firestore 预约文档路径
+      DocumentReference appointmentRef = FirebaseFirestore.instance
+          .collection("appointments")
+          .doc(customUid) // 用户 ID（确保 Firestore 允许此路径）
+          .collection("user_appointments")
+          .doc(appointmentId);
+
+      // 检查是否已有相同的预约
+      var snapshot = await appointmentRef.get();
+      if (snapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("This time is not available")),
+        );
+        return;
+      }
+
+      // 存储预约信息到 Firestore
+      await appointmentRef.set({
+        "userId": customUid, // 使用 u1, u2 等
+        "authUid": currentUser.uid, // Firebase Auth UID
+        "doctorId": widget.doctor.id, // 医生 ID
+        "date": formattedDate, // 日期
+        "time": formattedTime, // 时间
         "firstName": _firstNameController.text.trim(),
         "lastName": _lastNameController.text.trim(),
         "email": _emailController.text.trim(),
         "phone": _phoneController.text.trim(),
-        "date": formattedDate,
-        "time": formattedTime,
         "problem": _problemController.text.trim(),
-        "doctor_id": widget.doctor.id,
-        "doctor_name": widget.doctor.name, // 存医生姓名，方便前端查询
-        "timestamp": FieldValue.serverTimestamp(), // Firestore 服务器时间
-      };
+        "timestamp": FieldValue.serverTimestamp(),
+      });
 
-      // **存储到 Firestore**
-      FirebaseFirestore firestore = FirebaseFirestore.instance;
+      print("Appointment saved successfully!");
 
-      // **1️⃣ 存储到 `appointments` 集合（文档 ID 直接使用 `u1`, `u2`）**
-      await firestore
-          .collection("appointments")
-          .doc(customUserId) // 让 `user_id` 作为文档 ID
-          .set(appointmentData, SetOptions(merge: true));
-
-      // **2️⃣ 额外存储到 `users/{user_id}/{date}/{doctor_id}` 结构**
-      await firestore
-          .collection("users")
-          .doc(customUserId)
-          .collection(formattedDate) // 日期作为子集合
-          .doc(widget.doctor.id) // 以医生 ID 作为文档 ID，避免重复
-          .set(appointmentData, SetOptions(merge: true)); // 确保不会覆盖已有数据
-
-// Show confirmation dialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 80),
-                SizedBox(height: 15),
-                Text(
-                  "Appointment Booked Successfully!",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                  _clearForm(); // Clear form inputs
-                },
-                child: Text("OK", style: TextStyle(fontSize: 16)),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => AppointmentListPage()),
-                  ); // Navigate to appointment list
-                },
-                child:
-                    Text("View Appointments", style: TextStyle(fontSize: 16)),
-              ),
-            ],
-          );
-        },
+      // 成功后弹出对话框
+      _showDialog("Appointment booked successfully");
+    } catch (e) {
+      print("Error booking appointment: ${e.toString()}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
       );
     }
   }
 
-  // Clear the form after submission
-  void _clearForm() {
-    _formKey.currentState!.reset();
-    _firstNameController.clear();
-    _lastNameController.clear();
-    _emailController.clear();
-    _phoneController.clear();
-    _problemController.clear(); // Clear problem input field
-    setState(() {
-      selectedDate = null;
-      selectedTime = null;
-    });
+  void _showDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Column(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 50),
+            SizedBox(height: 10),
+            Text(message),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => AppointmentListPage()),
+              );
+            },
+            child: Text("View Appointment"),
+          ),
+        ],
+      ),
+    );
   }
 
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       title: Text("Book Appointment"),
+  //       flexibleSpace: Container(
+  //         decoration: BoxDecoration(
+  //           gradient: LinearGradient(
+  //             colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+  //             begin: Alignment.topCenter,
+  //             end: Alignment.bottomCenter,
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //     body: Container(
+  //       decoration: BoxDecoration(
+  //         gradient: LinearGradient(
+  //           colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+  //           begin: Alignment.topCenter,
+  //           end: Alignment.bottomCenter,
+  //         ),
+  //       ),
+  //       child: SingleChildScrollView(
+  //         padding: EdgeInsets.all(16.0),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Card(
+  //               color: Colors.white.withOpacity(0.1), // Slight transparency
+  //               child: ListTile(
+  //                 leading: CircleAvatar(
+  //                   radius: 30,
+  //                   backgroundImage: widget.doctor.image.isNotEmpty
+  //                       ? NetworkImage(widget.doctor.image)
+  //                       : AssetImage("assets/images/default.jpg")
+  //                           as ImageProvider,
+  //                 ),
+  //                 title: Text(
+  //                   widget.doctor.name,
+  //                   style: TextStyle(color: Colors.white), // White text
+  //                 ),
+  //                 subtitle: Text(
+  //                   widget.doctor.email,
+  //                   style: TextStyle(color: Colors.white70), // Light white text
+  //                 ),
+  //               ),
+  //             ),
+  //             SizedBox(height: 20),
+  //             Form(
+  //               key: _formKey,
+  //               child: Column(
+  //                 children: [
+  //                   _buildTextField(_firstNameController, "First Name"),
+  //                   _buildTextField(_lastNameController, "Last Name"),
+  //                   _buildTextField(_emailController, "Email"),
+  //                   _buildTextField(_phoneController, "Phone"),
+  //                   _buildTextField(
+  //                       _problemController, "Describe your problem"),
+  //                   _buildDateField(),
+  //                   _buildTimeField(),
+  //                   SizedBox(height: 24),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+
+  //     /// bottomNavigationBar
+  //     bottomNavigationBar: Container(
+  //       padding: EdgeInsets.all(16),
+  //       decoration: BoxDecoration(
+  //         gradient: LinearGradient(
+  //           colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+  //           begin: Alignment.topCenter,
+  //           end: Alignment.bottomCenter,
+  //         ),
+  //       ),
+  //       child: ElevatedButton(
+  //         onPressed: _submitAppointment,
+  //         style: ElevatedButton.styleFrom(
+  //           backgroundColor: Colors.deepPurpleAccent, // 'submit'button color
+  //           foregroundColor: Colors.white, // text color
+  //           minimumSize: Size(double.infinity, 50),
+  //         ),
+  //         child: Text("Submit"),
+  //       ),
+  //     ),
+  //   );
+  // }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFF1C1C3C), // 统一背景色，避免白色区域
       appBar: AppBar(
         title: Text("Book Appointment"),
-        backgroundColor: Colors.deepPurple,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
       ),
-      body: Padding(
-        padding: EdgeInsets.all(16.0),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
         child: Column(
           children: [
-            // Doctor info card
-            Card(
-              color: Colors.grey[850],
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: ListTile(
-                leading: CircleAvatar(
-                  radius: 30,
-                  backgroundImage: AssetImage(widget.doctor.image),
-                  backgroundColor: Colors.grey[800],
-                ),
-                title: Text(widget.doctor.name,
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
-                subtitle: Column(
+            Expanded(
+              // 让 Column 自动填充剩余空间
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16.0),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(widget.doctor.specialty,
-                        style: TextStyle(color: Colors.grey, fontSize: 14)),
+                    Card(
+                      color:
+                          Colors.white.withOpacity(0.1), // Slight transparency
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          radius: 30,
+                          backgroundImage: widget.doctor.image.isNotEmpty
+                              ? NetworkImage(widget.doctor.image)
+                              : AssetImage("assets/images/default.jpg")
+                                  as ImageProvider,
+                        ),
+                        title: Text(
+                          widget.doctor.name,
+                          style: TextStyle(color: Colors.white), // White text
+                        ),
+                        subtitle: Text(
+                          widget.doctor.email,
+                          style: TextStyle(
+                              color: Colors.white70), // Light white text
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          _buildTextField(_firstNameController, "First Name"),
+                          _buildTextField(_lastNameController, "Last Name"),
+                          _buildTextField(_emailController, "Email"),
+                          _buildTextField(_phoneController, "Phone"),
+                          _buildTextField(
+                              _problemController, "Describe your problem"),
+                          _buildDateField(),
+                          _buildTimeField(),
+                          SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 20),
-
-            // Appointment form
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: InputDecoration(labelText: "First Name"),
-                    validator: (value) =>
-                        value!.isEmpty ? "Enter First Name" : null,
-                  ),
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: InputDecoration(labelText: "Last Name"),
-                    validator: (value) =>
-                        value!.isEmpty ? "Enter Last Name" : null,
-                  ),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(labelText: "Email"),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) =>
-                        value!.contains('@') ? null : "Enter valid Email",
-                  ),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: InputDecoration(labelText: "Phone"),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) =>
-                        value!.length >= 10 ? null : "Enter valid Phone Number",
-                  ),
-                  SizedBox(height: 20),
-
-                  // Date & Time selection
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _selectDate,
-                        child: Text(selectedDate == null
-                            ? "Select Date"
-                            : DateFormat('yyyy-MM-dd').format(selectedDate!)),
-                      ),
-                      ElevatedButton(
-                        onPressed: _selectTime,
-                        child: Text(selectedTime == null
-                            ? "Select Time"
-                            : selectedTime!.format(context)),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-
-                  // Problem input field
-                  TextFormField(
-                    controller: _problemController,
-                    decoration:
-                        InputDecoration(labelText: "Describe your problem"),
-                    maxLines: 3,
-                    validator: (value) =>
-                        value!.isEmpty ? "Please describe your problem" : null,
-                  ),
-                  SizedBox(height: 20),
-
-                  ElevatedButton(
-                    onPressed: _submitForm,
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                    child: Text("Submit"),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
+      ),
+
+      /// bottomNavigationBar
+      bottomNavigationBar: Container(
+        height: 70, // 确保 Container 占满底部
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          // 让按钮不会因为底部导航栏被挤压
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 10), // 适当调整底部间距
+            child: ElevatedButton(
+              onPressed: _submitAppointment,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurpleAccent, // 'Submit' 按钮颜色
+                foregroundColor: Colors.white, // 文字颜色
+                minimumSize: Size(double.infinity, 50),
+              ),
+              child: Text("Submit"),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: controller,
+        style: TextStyle(color: Colors.white), // White text
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: Colors.white), // White label text
+          filled: true,
+          fillColor: Colors.black54, // **Dark semi-transparent background**
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide:
+                BorderSide(color: Colors.white, width: 2), // **White border**
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide:
+                BorderSide(color: Colors.white, width: 2), // **White border**
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(
+                color: Colors.white,
+                width: 2.5), // **Thicker white border when focused**
+          ),
+        ),
+        validator: (value) => value!.isEmpty ? "Required" : null,
+      ),
+    );
+  }
+
+  Widget _buildDateField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _dateController,
+        style: TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: "Date",
+          labelStyle: TextStyle(color: Colors.white),
+          filled: true,
+          fillColor: Colors.black54,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.white, width: 2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.white, width: 2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.white, width: 2.5),
+          ),
+        ),
+        readOnly: true,
+        onTap: () {}, // Replace with _selectDate
+      ),
+    );
+  }
+
+  /// **Time Selection Field**
+  Widget _buildTimeField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _timeController,
+        style: TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          labelText: "Time",
+          labelStyle: TextStyle(color: Colors.white),
+          filled: true,
+          fillColor: Colors.black54,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.white, width: 2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.white, width: 2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.white, width: 2.5),
+          ),
+        ),
+        readOnly: true,
+        onTap: () {}, // Replace with _selectTime
       ),
     );
   }
