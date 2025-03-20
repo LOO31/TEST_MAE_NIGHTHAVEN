@@ -7,7 +7,7 @@ import 'appointment_list_page.dart';
 class BookAppointmentPage extends StatefulWidget {
   final doctor;
 
-  BookAppointmentPage({required this.doctor});
+  BookAppointmentPage({required this.doctor, Key? key}) : super(key: key);
 
   @override
   _BookAppointmentPageState createState() => _BookAppointmentPageState();
@@ -15,16 +15,20 @@ class BookAppointmentPage extends StatefulWidget {
 
 class _BookAppointmentPageState extends State<BookAppointmentPage> {
   final _formKey = GlobalKey<FormState>();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _problemController =
-      TextEditingController(); // Added Problem input field
+  final TextEditingController _problemController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
 
-  // Select date
   void _selectDate() async {
     DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -35,11 +39,11 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     if (pickedDate != null) {
       setState(() {
         selectedDate = pickedDate;
+        _dateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
       });
     }
   }
 
-  // Select time
   void _selectTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
@@ -48,251 +52,256 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     if (pickedTime != null) {
       setState(() {
         selectedTime = pickedTime;
+        _timeController.text = pickedTime.format(context);
       });
     }
   }
 
-  // Retrieve custom user_id (e.g., "u1", "u2") from Firestore
-  Future<String?> _getCustomUid() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return null;
-
-    try {
-      QuerySnapshot query = await FirebaseFirestore.instance
-          .collection("users")
-          .where("auth_uid", isEqualTo: user.uid) // Query based on `auth_uid`
-          .limit(1)
-          .get();
-
-      if (query.docs.isNotEmpty) {
-        return query.docs.first.id; // Get custom user_id
-      } else {
-        print("Custom user ID not found.");
-      }
-    } catch (e) {
-      print("Error fetching custom user ID: $e");
-    }
-    return null;
+  void _showDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Column(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 50),
+            SizedBox(height: 10),
+            Text(message),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => AppointmentListPage()),
+              );
+            },
+            child: Text("View Appointment"),
+          ),
+        ],
+      ),
+    );
   }
 
-  // Submit appointment form
-  // 提交预约表单
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      if (selectedDate == null || selectedTime == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Please select date and time")),
-        );
-        return;
-      }
+  // Future<void> _submitAppointment() async {
+  //   if (!_formKey.currentState!.validate()) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("pls fill in all the information")),
+  //     );
+  //     return;
+  //   }
+  //   if (selectedDate == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("pls select date")),
+  //     );
+  //     return;
+  //   }
+  //   if (selectedTime == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("pls select time")),
+  //     );
+  //     return;
+  //   }
 
-      String? customUserId = await _getCustomUid();
-      if (customUserId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("User data not found!")),
-        );
-        return;
-      }
+  //   String userId = FirebaseAuth.instance.currentUser!.uid;
+  //   String formattedTime = selectedTime!.format(context);
+  //   String appointmentId = "${_dateController.text}_$formattedTime";
 
-      String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
-      String formattedTime = selectedTime!.format(context);
+  //   DocumentReference appointmentRef = FirebaseFirestore.instance
+  //       .collection("appointments")
+  //       .doc(userId) // 用户ID作为document
+  //       .collection("user_appointments") // 预约集合
+  //       .doc(appointmentId); // 预约ID
 
-      // 构建要存储的预约数据
-      Map<String, dynamic> appointmentData = {
-        "user_id": customUserId,
-        "firstName": _firstNameController.text.trim(),
-        "lastName": _lastNameController.text.trim(),
-        "email": _emailController.text.trim(),
-        "phone": _phoneController.text.trim(),
-        "date": formattedDate,
-        "time": formattedTime,
-        "problem": _problemController.text.trim(),
-        "doctor_id": widget.doctor.id,
-        "doctor_name": widget.doctor.name, // 存医生姓名，方便前端查询
-        "timestamp": FieldValue.serverTimestamp(), // Firestore 服务器时间
-      };
+  //   // 查询该用户是否已在该时间预约了其他医生
+  //   var snapshot = await appointmentRef.get();
+  //   if (snapshot.exists) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("this time is not available")),
+  //     );
+  //     return;
+  //   }
 
-      // **存储到 Firestore**
-      FirebaseFirestore firestore = FirebaseFirestore.instance;
+  //   // 预约存储
+  //   await appointmentRef.set({
+  //     "userId": userId,
+  //     "doctorId": widget.doctor.id,
+  //     "date": _dateController.text,
+  //     "time": formattedTime,
+  //     "firstName": _firstNameController.text,
+  //     "lastName": _lastNameController.text,
+  //     "email": _emailController.text,
+  //     "phone": _phoneController.text,
+  //     "problem": _problemController.text,
+  //   });
 
-      // **1️⃣ 存储到 `appointments` 集合（文档 ID 直接使用 `u1`, `u2`）**
-      await firestore
-          .collection("appointments")
-          .doc(customUserId) // 让 `user_id` 作为文档 ID
-          .set(appointmentData, SetOptions(merge: true));
+  //   print(
+  //       "Appointment saved under: appointments/$userId/user_appointments/$appointmentId");
 
-      // **2️⃣ 额外存储到 `users/{user_id}/{date}/{doctor_id}` 结构**
-      await firestore
+  //   _showDialog("Appointment booked successfully");
+  // }
+
+  Future<void> _submitAppointment() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please fill in all the information")),
+      );
+      return;
+    }
+    if (selectedDate == null || selectedTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please select both date and time")),
+      );
+      return;
+    }
+
+    User? currentUser = _auth.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("User not logged in!")),
+      );
+      return;
+    }
+
+    String userId = currentUser.uid;
+
+    String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
+    String formattedTime =
+        "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}";
+
+    Map<String, dynamic> appointmentData = {
+      "userId": userId,
+      "doctorId": widget.doctor.id,
+      "firstName": _firstNameController.text.trim(),
+      "lastName": _lastNameController.text.trim(),
+      "email": _emailController.text.trim(),
+      "phone": _phoneController.text.trim(),
+      "problem": _problemController.text.trim(),
+      "date": formattedDate,
+      "time": formattedTime,
+      "timestamp": FieldValue.serverTimestamp(),
+    };
+
+    try {
+      await _firestore
           .collection("users")
-          .doc(customUserId)
-          .collection(formattedDate) // 日期作为子集合
-          .doc(widget.doctor.id) // 以医生 ID 作为文档 ID，避免重复
-          .set(appointmentData, SetOptions(merge: true)); // 确保不会覆盖已有数据
+          .doc(userId)
+          .collection("appointments")
+          .doc("$formattedDate-$formattedTime")
+          .set(appointmentData);
 
-// Show confirmation dialog
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 80),
-                SizedBox(height: 15),
-                Text(
-                  "Appointment Booked Successfully!",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close the dialog
-                  _clearForm(); // Clear form inputs
-                },
-                child: Text("OK", style: TextStyle(fontSize: 16)),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(); // Close dialog
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => AppointmentListPage()),
-                  ); // Navigate to appointment list
-                },
-                child:
-                    Text("View Appointments", style: TextStyle(fontSize: 16)),
-              ),
-            ],
-          );
-        },
+      print("Appointment saved successfully: $appointmentData");
+
+      _showDialog("Appointment booked successfully");
+    } catch (e) {
+      print("Error saving appointment: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to save appointment!")),
       );
     }
   }
 
-  // Clear the form after submission
-  void _clearForm() {
-    _formKey.currentState!.reset();
-    _firstNameController.clear();
-    _lastNameController.clear();
-    _emailController.clear();
-    _phoneController.clear();
-    _problemController.clear(); // Clear problem input field
-    setState(() {
-      selectedDate = null;
-      selectedTime = null;
-    });
-  }
+  // Future<void> _submitAppointment() async {
+  //   if (!_formKey.currentState!.validate()) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Please fill in all the information")),
+  //     );
+  //     return;
+  //   }
+  //   if (selectedDate == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Please select a date")),
+  //     );
+  //     return;
+  //   }
+  //   if (selectedTime == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Please select a time")),
+  //     );
+  //     return;
+  //   }
+
+  //   String userId = FirebaseAuth.instance.currentUser!.uid;
+  //   String formattedTime = "${selectedTime!.hour}:${selectedTime!.minute}";
+  //   String appointmentId =
+  //       "${_dateController.text}_$formattedTime"; // Unique appointment ID
+
+  //   // Correct Firestore DocumentReference
+  //   DocumentReference appointmentRef = FirebaseFirestore.instance
+  //       .collection("appointments") // Top-level collection
+  //       .doc(userId) // User document
+  //       .collection("appointments") // Subcollection for appointments
+  //       .doc(appointmentId); // Appointment document
+
+  //   // Check if the appointment already exists
+  //   var snapshot = await appointmentRef.get();
+  //   if (snapshot.exists) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("This time is not available")),
+  //     );
+  //     return;
+  //   }
+
+  //   // Save the appointment to Firestore
+  //   await appointmentRef.set({
+  //     "userId": userId,
+  //     "doctorId": widget.doctor.id,
+  //     "date": _dateController.text,
+  //     "time": formattedTime,
+  //     "firstName": _firstNameController.text,
+  //     "lastName": _lastNameController.text,
+  //     "email": _emailController.text,
+  //     "phone": _phoneController.text,
+  //     "problem": _problemController.text,
+  //   }).then((_) {
+  //     _showDialog("Appointment booked successfully");
+  //   }).catchError((error) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Failed to book appointment: $error")),
+  //     );
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Book Appointment"),
-        backgroundColor: Colors.deepPurple,
-      ),
-      body: Padding(
+      appBar: AppBar(title: Text("Book Appointment")),
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Doctor info card
             Card(
-              color: Colors.grey[850],
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
               child: ListTile(
                 leading: CircleAvatar(
                   radius: 30,
-                  backgroundImage: AssetImage(widget.doctor.image),
-                  backgroundColor: Colors.grey[800],
+                  backgroundImage: widget.doctor.image.isNotEmpty
+                      ? NetworkImage(widget.doctor.image)
+                      : AssetImage("assets/images/default.jpg")
+                          as ImageProvider,
                 ),
-                title: Text(widget.doctor.name,
-                    style: TextStyle(color: Colors.white, fontSize: 16)),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.doctor.specialty,
-                        style: TextStyle(color: Colors.grey, fontSize: 14)),
-                  ],
-                ),
+                title: Text(widget.doctor.name),
+                subtitle: Text(widget.doctor.email),
               ),
             ),
             SizedBox(height: 20),
-
-            // Appointment form
             Form(
               key: _formKey,
               child: Column(
                 children: [
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: InputDecoration(labelText: "First Name"),
-                    validator: (value) =>
-                        value!.isEmpty ? "Enter First Name" : null,
-                  ),
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: InputDecoration(labelText: "Last Name"),
-                    validator: (value) =>
-                        value!.isEmpty ? "Enter Last Name" : null,
-                  ),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(labelText: "Email"),
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) =>
-                        value!.contains('@') ? null : "Enter valid Email",
-                  ),
-                  TextFormField(
-                    controller: _phoneController,
-                    decoration: InputDecoration(labelText: "Phone"),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) =>
-                        value!.length >= 10 ? null : "Enter valid Phone Number",
-                  ),
-                  SizedBox(height: 20),
-
-                  // Date & Time selection
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _selectDate,
-                        child: Text(selectedDate == null
-                            ? "Select Date"
-                            : DateFormat('yyyy-MM-dd').format(selectedDate!)),
-                      ),
-                      ElevatedButton(
-                        onPressed: _selectTime,
-                        child: Text(selectedTime == null
-                            ? "Select Time"
-                            : selectedTime!.format(context)),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-
-                  // Problem input field
-                  TextFormField(
-                    controller: _problemController,
-                    decoration:
-                        InputDecoration(labelText: "Describe your problem"),
-                    maxLines: 3,
-                    validator: (value) =>
-                        value!.isEmpty ? "Please describe your problem" : null,
-                  ),
-                  SizedBox(height: 20),
-
+                  _buildTextField(_firstNameController, "First Name"),
+                  _buildTextField(_lastNameController, "Last Name"),
+                  _buildTextField(_emailController, "Email"),
+                  _buildTextField(_phoneController, "Phone"),
+                  _buildTextField(_problemController, "Describe your problem"),
+                  _buildDateField(),
+                  _buildTimeField(),
+                  SizedBox(height: 24),
                   ElevatedButton(
-                    onPressed: _submitForm,
-                    style:
-                        ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                    onPressed: _submitAppointment,
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 50),
+                    ),
                     child: Text("Submit"),
                   ),
                 ],
@@ -300,6 +309,50 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(),
+        ),
+        validator: (value) => value!.isEmpty ? "Required" : null,
+      ),
+    );
+  }
+
+  Widget _buildDateField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _dateController,
+        decoration: InputDecoration(
+          labelText: "Date",
+          border: OutlineInputBorder(),
+        ),
+        readOnly: true,
+        onTap: _selectDate,
+      ),
+    );
+  }
+
+  Widget _buildTimeField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: TextFormField(
+        controller: _timeController,
+        decoration: InputDecoration(
+          labelText: "Time",
+          border: OutlineInputBorder(),
+        ),
+        readOnly: true,
+        onTap: _selectTime,
       ),
     );
   }
