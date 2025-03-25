@@ -15,7 +15,6 @@ class Doctor {
     required this.image,
   });
 
-  // 处理 null 值，避免类型转换错误
   factory Doctor.fromFirestore(String id, Map<String, dynamic> data) {
     return Doctor(
       id: id,
@@ -70,6 +69,22 @@ class _DoctorListPageState extends State<DoctorListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color(0xFF4A148C),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(
+                context); // This will take the user back to the previous screen
+          },
+        ),
+        title: Text(
+          'Doctors List',
+          style: TextStyle(color: Colors.white), // Set the title color to white
+        ),
+        iconTheme: IconThemeData(
+            color: Colors.white), // Set the back arrow color to white
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(

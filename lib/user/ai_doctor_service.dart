@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'ai_chat_page.dart';
 import 'doctor_list.dart';
+import 'appointment_list_page.dart';
 
 class AIDoctorService extends StatefulWidget {
   final String email;
@@ -117,6 +118,22 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
                 },
                 child:
                     const Text('Doctor', style: TextStyle(color: Colors.white)),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.purpleAccent,
+                  minimumSize: const Size(200, 50),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AppointmentListPage()),
+                  );
+                },
+                child: const Text('View Appointment',
+                    style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

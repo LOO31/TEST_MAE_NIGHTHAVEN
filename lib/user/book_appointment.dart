@@ -44,15 +44,37 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     }
   }
 
+  // void _selectTime() async {
+  //   TimeOfDay? pickedTime = await showTimePicker(
+  //     context: context,
+  //     initialTime: TimeOfDay.now(),
+  //   );
+  //   if (pickedTime != null) {
+  //     setState(() {
+  //       selectedTime = pickedTime;
+  //       _timeController.text = pickedTime.format(context);
+  //     });
+  //   }
+  // }
+
   void _selectTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (BuildContext context, Widget? child) {
+        return MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(alwaysUse24HourFormat: false), // Force 12-hour format
+          child: child!,
+        );
+      },
     );
+
     if (pickedTime != null) {
       setState(() {
         selectedTime = pickedTime;
-        _timeController.text = pickedTime.format(context);
+        _timeController.text =
+            pickedTime.format(context); // Ensure AM/PM format
       });
     }
   }
@@ -77,6 +99,92 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
       throw Exception("Error fetching custom UID: $e");
     }
   }
+
+  // Future<void> _submitAppointment() async {
+  //   if (!_formKey.currentState!.validate()) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text("Please fill in all the information")),
+  //     );
+  //     return;
+  //   }
+
+  //   if (selectedDate == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text("Please select a date")),
+  //     );
+  //     return;
+  //   }
+
+  //   if (selectedTime == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text("Please select a time")),
+  //     );
+  //     return;
+  //   }
+
+  //   try {
+  //     User? currentUser = FirebaseAuth.instance.currentUser;
+  //     if (currentUser == null) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text("User not logged in!")),
+  //       );
+  //       return;
+  //     }
+
+  //     // 获取用户的 Custom UID（例如 u1, u2）
+  //     String customUid = await _getCustomUid();
+
+  //     // 格式化日期和时间
+  //     String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
+  //     String formattedTime =
+  //         "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}";
+
+  //     // 生成唯一的预约 ID
+  //     String appointmentId = "${formattedDate}_$formattedTime";
+
+  //     // Firestore 预约文档路径
+  //     DocumentReference appointmentRef = FirebaseFirestore.instance
+  //         .collection("appointments")
+  //         .doc(customUid) // 用户 ID（确保 Firestore 允许此路径）
+  //         .collection("user_appointments")
+  //         .doc(appointmentId);
+
+  //     // 检查是否已有相同的预约
+  //     var snapshot = await appointmentRef.get();
+  //     if (snapshot.exists) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text("This time is not available")),
+  //       );
+  //       return;
+  //     }
+
+  //     // 存储预约信息到 Firestore
+  //     await appointmentRef.set({
+  //       "userId": customUid, // 使用 u1, u2 等
+  //       "authUid": currentUser.uid, // Firebase Auth UID
+  //       "doctorId": widget.doctor.id, // 医生 ID
+  //       "doctorName": widget.doctor.name,
+  //       "date": formattedDate, // 日期
+  //       "time": formattedTime, // 时间
+  //       "firstName": _firstNameController.text.trim(),
+  //       "lastName": _lastNameController.text.trim(),
+  //       "email": _emailController.text.trim(),
+  //       "phone": _phoneController.text.trim(),
+  //       "problem": _problemController.text.trim(),
+  //       "timestamp": FieldValue.serverTimestamp(),
+  //     });
+
+  //     print("Appointment saved successfully!");
+
+  //     // 成功后弹出对话框
+  //     _showDialog("Appointment booked successfully");
+  //   } catch (e) {
+  //     print("Error booking appointment: ${e.toString()}");
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text("Error: ${e.toString()}")),
+  //     );
+  //   }
+  // }
 
   Future<void> _submitAppointment() async {
     if (!_formKey.currentState!.validate()) {
@@ -109,25 +217,25 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
         return;
       }
 
-      // 获取用户的 Custom UID（例如 u1, u2）
+      // Get custom user ID (e.g., u1, u2)
       String customUid = await _getCustomUid();
 
-      // 格式化日期和时间
+      // Format date and time
       String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
       String formattedTime =
-          "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}";
+          selectedTime!.format(context); // Ensure AM/PM format
 
-      // 生成唯一的预约 ID
+      // Generate a unique appointment ID
       String appointmentId = "${formattedDate}_$formattedTime";
 
-      // Firestore 预约文档路径
+      // Firestore appointment document path
       DocumentReference appointmentRef = FirebaseFirestore.instance
           .collection("appointments")
-          .doc(customUid) // 用户 ID（确保 Firestore 允许此路径）
+          .doc(customUid) // User ID (ensure Firestore allows this path)
           .collection("user_appointments")
           .doc(appointmentId);
 
-      // 检查是否已有相同的预约
+      // Check if the appointment already exists
       var snapshot = await appointmentRef.get();
       if (snapshot.exists) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -136,13 +244,14 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
         return;
       }
 
-      // 存储预约信息到 Firestore
+      // Save appointment details to Firestore
       await appointmentRef.set({
-        "userId": customUid, // 使用 u1, u2 等
+        "userId": customUid, // Custom user ID (e.g., u1, u2)
         "authUid": currentUser.uid, // Firebase Auth UID
-        "doctorId": widget.doctor.id, // 医生 ID
-        "date": formattedDate, // 日期
-        "time": formattedTime, // 时间
+        "doctorId": widget.doctor.id, // Doctor ID
+        "doctorName": widget.doctor.name,
+        "date": formattedDate, // Date
+        "time": formattedTime, // Time with AM/PM
         "firstName": _firstNameController.text.trim(),
         "lastName": _lastNameController.text.trim(),
         "email": _emailController.text.trim(),
@@ -153,7 +262,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
 
       print("Appointment saved successfully!");
 
-      // 成功后弹出对话框
+      // Show success dialog
       _showDialog("Appointment booked successfully");
     } catch (e) {
       print("Error booking appointment: ${e.toString()}");
@@ -189,98 +298,6 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     );
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: Text("Book Appointment"),
-  //       flexibleSpace: Container(
-  //         decoration: BoxDecoration(
-  //           gradient: LinearGradient(
-  //             colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
-  //             begin: Alignment.topCenter,
-  //             end: Alignment.bottomCenter,
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //     body: Container(
-  //       decoration: BoxDecoration(
-  //         gradient: LinearGradient(
-  //           colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
-  //           begin: Alignment.topCenter,
-  //           end: Alignment.bottomCenter,
-  //         ),
-  //       ),
-  //       child: SingleChildScrollView(
-  //         padding: EdgeInsets.all(16.0),
-  //         child: Column(
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: [
-  //             Card(
-  //               color: Colors.white.withOpacity(0.1), // Slight transparency
-  //               child: ListTile(
-  //                 leading: CircleAvatar(
-  //                   radius: 30,
-  //                   backgroundImage: widget.doctor.image.isNotEmpty
-  //                       ? NetworkImage(widget.doctor.image)
-  //                       : AssetImage("assets/images/default.jpg")
-  //                           as ImageProvider,
-  //                 ),
-  //                 title: Text(
-  //                   widget.doctor.name,
-  //                   style: TextStyle(color: Colors.white), // White text
-  //                 ),
-  //                 subtitle: Text(
-  //                   widget.doctor.email,
-  //                   style: TextStyle(color: Colors.white70), // Light white text
-  //                 ),
-  //               ),
-  //             ),
-  //             SizedBox(height: 20),
-  //             Form(
-  //               key: _formKey,
-  //               child: Column(
-  //                 children: [
-  //                   _buildTextField(_firstNameController, "First Name"),
-  //                   _buildTextField(_lastNameController, "Last Name"),
-  //                   _buildTextField(_emailController, "Email"),
-  //                   _buildTextField(_phoneController, "Phone"),
-  //                   _buildTextField(
-  //                       _problemController, "Describe your problem"),
-  //                   _buildDateField(),
-  //                   _buildTimeField(),
-  //                   SizedBox(height: 24),
-  //                 ],
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-
-  //     /// bottomNavigationBar
-  //     bottomNavigationBar: Container(
-  //       padding: EdgeInsets.all(16),
-  //       decoration: BoxDecoration(
-  //         gradient: LinearGradient(
-  //           colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
-  //           begin: Alignment.topCenter,
-  //           end: Alignment.bottomCenter,
-  //         ),
-  //       ),
-  //       child: ElevatedButton(
-  //         onPressed: _submitAppointment,
-  //         style: ElevatedButton.styleFrom(
-  //           backgroundColor: Colors.deepPurpleAccent, // 'submit'button color
-  //           foregroundColor: Colors.white, // text color
-  //           minimumSize: Size(double.infinity, 50),
-  //         ),
-  //         child: Text("Submit"),
-  //       ),
-  //     ),
-  //   );
-  // }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -308,7 +325,6 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
         child: Column(
           children: [
             Expanded(
-              // 让 Column 自动填充剩余空间
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(16.0),
                 child: Column(
@@ -363,7 +379,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
 
       /// bottomNavigationBar
       bottomNavigationBar: Container(
-        height: 70, // 确保 Container 占满底部
+        height: 70,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
@@ -372,14 +388,13 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
           ),
         ),
         child: SafeArea(
-          // 让按钮不会因为底部导航栏被挤压
           child: Padding(
-            padding: EdgeInsets.only(bottom: 10), // 适当调整底部间距
+            padding: EdgeInsets.only(bottom: 10),
             child: ElevatedButton(
               onPressed: _submitAppointment,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent, // 'Submit' 按钮颜色
-                foregroundColor: Colors.white, // 文字颜色
+                backgroundColor: Colors.deepPurpleAccent,
+                foregroundColor: Colors.white,
                 minimumSize: Size(double.infinity, 50),
               ),
               child: Text("Submit"),
@@ -448,7 +463,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
           ),
         ),
         readOnly: true,
-        onTap: () {}, // Replace with _selectDate
+        onTap: _selectDate,
       ),
     );
   }
@@ -479,7 +494,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
           ),
         ),
         readOnly: true,
-        onTap: () {}, // Replace with _selectTime
+        onTap: _selectTime,
       ),
     );
   }
