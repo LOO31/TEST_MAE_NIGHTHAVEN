@@ -30,17 +30,20 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  #UI & Icon
   google_fonts: ^6.2.1
   cupertino_icons: ^1.0.8  # The following adds the Cupertino Icons font to your application.# Use with the CupertinoIcons class for iOS style icons.
+  #firebase services
   firebase_core: ^3.12.1  # Firebase dependencies - Replace "x.x.x" with the latest stable versions# Replace with the latest version
   firebase_auth: ^5.5.1  # Replace with the latest version
   cloud_firestore: ^5.6.5  # Replace with the latest version
   firebase_storage: ^12.4.4  # Replace with the latest version
   firebase_messaging: ^15.2.4  # Replace with the latest version
+  #security & encryption
   bcrypt: ^1.1.3
   crypto: ^3.0.3
+  #ui & Enhancement
   fluttertoast: ^8.0.9
-  fl_chart: ^0.64.0
   image_picker: ^0.8.5+3 
   pdf: ^3.10.4
   printing: ^5.11.0
@@ -49,6 +52,14 @@ dependencies:
   animated_text_kit: ^4.2.2 
   font_awesome_flutter: ^10.7.0
   cached_network_image: ^3.2.3
+  flutter_time_picker_spinner: ^2.0.0 #好像没有运用到
+  audioplayers: ^6.4.0 #play music
+  syncfusion_flutter_gauges: ^28.2.11
+  table_calendar: ^3.0.9
+  fl_chart: ^0.70.2
+  syncfusion_flutter_charts: ^28.2.12
+  flutter_volume_controller: 1.3.3
+  connectivity_plus: ^6.1.3
 
 dev_dependencies:
   flutter_test:
@@ -85,6 +96,23 @@ flutter:
     - assets/images/Forest_Night.jpg
     - assets/images/Full_Moon.png
     - assets/images/Ocean_Moon.jpg
+    - assets/images/sleep.jpg
+    - assets/images/music.webp
+    - assets/images/profile.jpg
+    - assets/images/aichatbot.jpg
+    - assets/images/doctor1.jpg
+    - assets/images/doctor2.jpg
+    - assets/images/doctor3.jpg
+    - assets/audio/romantic.mp3
+    - assets/audio/christmas.mp3
+    - assets/audio/dream.mp3
+    - assets/audio/hiphop.mp3
+    - assets/audio/holiday.mp3
+    - assets/audio/relax.mp3
+    - assets/audio/yoga.mp3
+    - assets/audio/newstart.mp3
+    - assets/audio/blueday.mp3
+    - assets/audio/nightsky.mp3
 
   fonts:
     - family: LeckerliOne

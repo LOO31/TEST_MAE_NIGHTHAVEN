@@ -1,31 +1,47 @@
-import 'dart:async'; // Suitable for Timer
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import '/services/firebase_connected_device.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'role_selection.dart';
+import '/user/sleep_tracker.dart';
+import '/user/profile_setting.dart';
+import '/user/diary.dart';
+import '/user/ai_doctor_service.dart';
+import '/user/sleep_report.dart';
 
 class MainPage extends StatefulWidget {
-  const MainPage({super.key, required String email});
+  final String email;
+
+  const MainPage({super.key, required this.email});
 
   @override
   _MainPageState createState() => _MainPageState();
 }
 
 class _MainPageState extends State<MainPage> {
-  late String _currentTime; // Store Timing
-  late Timer _timer; // Timer
+  late String _currentTime;
+  late Timer _timer;
+  bool _showConnectedDevices =
+      false; // Controls whether the device list is displayed
+  String? _connectedDevice;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _updateTime(); // format Time
+    _updateTime();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _updateTime(); // update time per sec
+      _updateTime();
     });
+
+    // **获取 Firestore 已连接的设备**
+    _loadConnectedDevice();
   }
 
   @override
   void dispose() {
-    _timer.cancel(); // Stop timer when destroyed
+    _timer.cancel();
     super.dispose();
   }
 
@@ -38,19 +54,52 @@ class _MainPageState extends State<MainPage> {
   }
 
   String _formatNumber(int number) {
-    return number.toString().padLeft(2, '0'); // ensure two digit
+    return number.toString().padLeft(2, '0');
+  }
+
+  void _toggleConnection(String deviceName) async {
+    print("Toggling connection for: $deviceName");
+
+    FirebaseConnectedDevice firebaseService = FirebaseConnectedDevice();
+    String? newDevice = (_connectedDevice == deviceName) ? null : deviceName;
+
+    print("New device to be updated in Firestore: $newDevice");
+
+    await firebaseService.updateConnectedDevice(newDevice); // 先存数据库
+    setState(() {
+      _connectedDevice = newDevice;
+    });
+  }
+
+  void _loadConnectedDevice() async {
+    FirebaseConnectedDevice firebaseService = FirebaseConnectedDevice();
+    String? device = await firebaseService.getConnectedDevice();
+    setState(() {
+      _connectedDevice = device;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1B1D2A),
+      backgroundColor: Colors.black, // Pure black background
       appBar: AppBar(
+        title: Text(
+          "User Main Page",
+          style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 16), // Set title text color to white
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileSettings()),
+            );
+          },
         ),
         actions: [
           IconButton(
@@ -63,28 +112,44 @@ class _MainPageState extends State<MainPage> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text(
-              "NightHaven",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-            _buildClockWidget(),
-            const SizedBox(height: 30),
-            _buildConnectedDevicesSection(),
-            const Spacer(),
-            _buildBottomNavigation(),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.purpleAccent,
+              Color(0xFF66363A)
+            ], // Gradient background
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
+        padding: const EdgeInsets.all(16.0),
+        child: _showConnectedDevices
+            ? _buildConnectedDevicesList()
+            : _buildMainContent(),
       ),
+      bottomNavigationBar: _buildBottomNavigation(),
+    );
+  }
+
+  Widget _buildMainContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          "NightHaven",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 20),
+        _buildClockWidget(),
+        const SizedBox(height: 30),
+        _buildConnectedDevicesSection(),
+        const Spacer(),
+      ],
     );
   }
 
@@ -93,14 +158,11 @@ class _MainPageState extends State<MainPage> {
       alignment: Alignment.center,
       children: [
         Container(
-          width: 210, // Circle Size
+          width: 210,
           height: 210,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: Colors.white,
-              width: 4, // Circle's Width
-            ),
+            border: Border.all(color: Colors.white, width: 4),
           ),
         ),
         Column(
@@ -116,10 +178,7 @@ class _MainPageState extends State<MainPage> {
             const SizedBox(height: 10),
             Text(
               _getGreetingMessage(),
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 18,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 18),
             ),
           ],
         ),
@@ -141,19 +200,15 @@ class _MainPageState extends State<MainPage> {
   void _handleLogout(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
-
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Logout Success")),
       );
-
       Future.delayed(const Duration(seconds: 2), () {
         if (!context.mounted) return;
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-              builder: (context) => const RoleSelection()),
+          MaterialPageRoute(builder: (context) => const RoleSelection()),
           (route) => false,
         );
       });
@@ -181,7 +236,11 @@ class _MainPageState extends State<MainPage> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () {
+                setState(() {
+                  _showConnectedDevices = true; // Show the list of devices
+                });
+              },
               child: const Text(
                 "View All >",
                 style: TextStyle(color: Colors.white70),
@@ -190,13 +249,16 @@ class _MainPageState extends State<MainPage> {
           ],
         ),
         const SizedBox(height: 10),
-        _buildDeviceCard("Apple Watch", "100%", "Connected"),
-        _buildDeviceCard("Mi Band", "77%", "Disconnect"),
+        _buildDeviceCard("Apple Watch", "100%",
+            _connectedDevice == "Apple Watch" ? "Connected" : "Disconnected"),
+        _buildDeviceCard("Mi Band", "77%",
+            _connectedDevice == "Mi Band" ? "Connected" : "Disconnected"),
       ],
     );
   }
 
-  Widget _buildDeviceCard(String name, String battery, String status) {
+  Widget _buildDeviceCard(String deviceName, String battery, String status) {
+    bool isConnected = _connectedDevice == deviceName;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       padding: const EdgeInsets.all(12),
@@ -210,29 +272,106 @@ class _MainPageState extends State<MainPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name,
+              Text(deviceName,
                   style: const TextStyle(color: Colors.white, fontSize: 16)),
               Text("$battery • $status",
                   style: const TextStyle(color: Colors.white70, fontSize: 14)),
             ],
           ),
           const Icon(Icons.bookmark_border, color: Colors.white70),
+          ElevatedButton(
+            onPressed: () => _toggleConnection(deviceName),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: isConnected ? Colors.red : Colors.green),
+            child: Text(isConnected ? "Disconnect" : "Connect"),
+          ),
         ],
       ),
     );
   }
 
+  Widget _buildConnectedDevicesList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            setState(() {
+              _showConnectedDevices = false; // Return to the main screen
+            });
+          },
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Connected Devices",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildDeviceCard("Apple Watch", "100%",
+            _connectedDevice == "Apple Watch" ? "Connected" : "Disconnected"),
+        _buildDeviceCard("Mi Band", "77%",
+            _connectedDevice == "Mi Band" ? "Connected" : "Disconnected"),
+        _buildDeviceCard("Fitbit", "50%",
+            _connectedDevice == "Fitbit" ? "Connected" : "Disconnected"),
+      ],
+    );
+  }
+
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
-      backgroundColor: const Color(0xFF2D3142),
-      selectedItemColor: const Color.fromARGB(255, 0, 0, 0),
-      unselectedItemColor: const Color.fromARGB(179, 0, 0, 0),
+      backgroundColor: const Color(0xFF4A148C),
+      selectedItemColor: Colors.black,
+      unselectedItemColor: const Color(0xFF9C27B0),
+      type: BottomNavigationBarType.fixed,
+      showUnselectedLabels: true,
+      currentIndex: _selectedIndex,
+      onTap: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+
+        if (index == 0) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SleepTracker(email: widget.email),
+            ),
+          );
+        } else if (index == 1) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DiaryEmotionScreen(email: widget.email),
+            ),
+          );
+        } else if (index == 2) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AIDoctorService(email: widget.email),
+            ),
+          );
+        } else if (index == 3) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SleepReport(
+                userId: '',
+              ),
+            ),
+          );
+        }
+      },
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.bedtime), label: "Sleep"),
+        BottomNavigationBarItem(icon: Icon(Icons.favorite), label: "Diary"),
         BottomNavigationBarItem(
-            icon: Icon(Icons.favorite), label: "Diary & Emotion"),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.medical_services), label: "AI & Doctor"),
+            icon: Icon(Icons.medical_services), label: "AI"),
         BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: "Report"),
       ],
     );
