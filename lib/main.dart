@@ -9,7 +9,6 @@ import 'screen/mobile_register.dart';
 import 'screen/mobile_login.dart';
 import 'screen/main_page.dart';
 import 'admin/admin_dashboard.dart';
-import 'admin/admin_userManagement.dart';
 
 // Import user-related screens
 import '/user/sleep_tracker.dart';
@@ -70,9 +69,10 @@ class MyApp extends StatelessWidget {
               builder: (context) => MainPage(email: args['email']),
             );
           case '/adminUserManagement':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
-                builder: (context) => const AdminUserManagement());
-
+                builder: (context) => const AdminUserManagement()
+            );
           // routes for user features
           case '/sleepTracker':
             final args = settings.arguments as Map<String, dynamic>? ?? {};

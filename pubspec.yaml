@@ -44,6 +44,14 @@ dependencies:
   crypto: ^3.0.3
   #ui & Enhancement
   fluttertoast: ^8.0.9
+  image_picker: ^0.8.5+3 
+  pdf: ^3.10.4
+  printing: ^5.11.0
+  open_file: ^3.3.2
+  table_calendar: ^3.0.0
+  animated_text_kit: ^4.2.2 
+  font_awesome_flutter: ^10.7.0
+  cached_network_image: ^3.2.3
   flutter_time_picker_spinner: ^2.0.0 #好像没有运用到
   audioplayers: ^6.4.0 #play music
   syncfusion_flutter_gauges: ^28.2.11
@@ -84,6 +92,10 @@ flutter:
   assets:
     - assets/images/NightHavenLogo.jpg
     - assets/images/cloud.jpg
+    - assets/images/Aurora_Light.jpeg
+    - assets/images/Forest_Night.jpg
+    - assets/images/Full_Moon.png
+    - assets/images/Ocean_Moon.jpg
     - assets/images/sleep.jpg
     - assets/images/music.webp
     - assets/images/profile.jpg
