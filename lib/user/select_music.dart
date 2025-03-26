@@ -11,7 +11,6 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
   AudioPlayer audioPlayer = AudioPlayer();
   bool isPlaying = false;
 
-  // 推荐音乐列表（标题 + 音乐文件）
   final List<Map<String, String>> musicList = [
     {"title": "Romantic", "file": "assets/audio/romantic.mp3"},
     {"title": "Christmas", "file": "assets/audio/christmas.mp3"},
@@ -26,7 +25,7 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
   ];
 
   void playMusic(String filePath) async {
-    await audioPlayer.stop(); // 停止当前音乐
+    await audioPlayer.stop(); // stop current play music
     await audioPlayer.play(AssetSource(filePath)); //play music directly
 
     setState(() {
@@ -44,7 +43,7 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
 
   @override
   void dispose() {
-    audioPlayer.dispose(); // 释放音频资源
+    audioPlayer.dispose();
     super.dispose();
   }
 
@@ -64,11 +63,7 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
           TextButton(
             onPressed: () {
               if (selectedMusic.isNotEmpty) {
-                // 确保用户选择了音乐
-                Navigator.pop(context, selectedMusic);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Music chosen success!")),
-                );
+                showSuccessDialog();
               }
             },
             child: Text(
@@ -101,7 +96,51 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
     );
   }
 
-  /// 音乐封面网格
+  void showSuccessDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          backgroundColor: Colors.black87,
+          title: Column(
+            children: [
+              Icon(Icons.check_circle, color: Colors.green, size: 50),
+              SizedBox(height: 10),
+              Text(
+                "Music Choose Success",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context, selectedMusic);
+                },
+                child: Text(
+                  "OK",
+                  style: TextStyle(color: Colors.blue, fontSize: 16),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// music widget
   Widget _buildMusicGrid() {
     return GridView.builder(
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -119,11 +158,12 @@ class _SelectMusicPageState extends State<SelectMusicPage> {
         return GestureDetector(
           onTap: () {
             setState(() {
-              if (selectedMusic == title) {
+              if (isSelected) {
                 stopMusic();
+                selectedMusic = "";
               } else {
                 selectedMusic = title;
-                playMusic(filePath);
+                playMusic(filePath.replaceFirst('assets/', ''));
               }
             });
           },
