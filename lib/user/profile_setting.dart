@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_volume_controller/flutter_volume_controller.dart';
 import '/user/edit_personal_info.dart';
 
 class ProfileSettings extends StatefulWidget {
@@ -13,11 +14,13 @@ class _ProfileSettingsState extends State<ProfileSettings> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String username = "Loading...";
   String email = "Loading...";
+  double _volume = 0.75; // 默认音量 75%
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _getVolume(); // 获取当前音量
   }
 
   Future<void> _loadUserData() async {
@@ -37,6 +40,18 @@ class _ProfileSettingsState extends State<ProfileSettings> {
         });
       }
     }
+  }
+
+  Future<void> _getVolume() async {
+    double? volume = await FlutterVolumeController.getVolume();
+    setState(() {
+      _volume = volume ?? 0.75; // If null, fallback to default 0.75
+    });
+  }
+
+  void _setVolume(double value) {
+    FlutterVolumeController.setVolume(value);
+    _getVolume(); // Ensure UI updates properly
   }
 
   @override
@@ -127,22 +142,65 @@ class _ProfileSettingsState extends State<ProfileSettings> {
             SizedBox(height: 20),
             // Settings Section
             _buildSettingItem("Notification", "On"),
-            _buildSettingItem("Sound", "75%"),
-            _buildSettingItem("Issue and Feedback", "More"),
-            _buildSettingItem("Customized Sleep Goal", "More"),
-            _buildSettingItem("Frequently Asked Questions", "More"),
-            _buildSettingItem("Help Section", "More"),
+            _buildSettingItem("Sound", "${(_volume * 100).toInt()}%",
+                onTap: _showVolumeDialog),
+            _buildSettingItem("Privacy Policy", "More"),
+            _buildSettingItem("Terms & Conditions", "More"),
+            _buildSettingItem("App Version", "More"),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSettingItem(String title, String subtitle) {
+  /// 生成设置项
+  Widget _buildSettingItem(String title, String subtitle,
+      {VoidCallback? onTap}) {
     return ListTile(
       title: Text(title, style: TextStyle(color: Colors.white)),
-      trailing: Text(subtitle, style: TextStyle(color: Colors.white70)),
-      onTap: () {},
+      trailing: title == "Sound"
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(subtitle, style: TextStyle(color: Colors.white70)),
+                IconButton(
+                  icon: Icon(Icons.volume_up, color: Colors.white70),
+                  onPressed: onTap,
+                ),
+              ],
+            )
+          : Text(subtitle, style: TextStyle(color: Colors.white70)),
+      onTap: onTap,
+    );
+  }
+
+  /// 显示音量调整对话框
+  void _showVolumeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Adjust Volume"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Slider(
+                value: _volume,
+                min: 0.0,
+                max: 1.0,
+                onChanged: (value) => _setVolume(value),
+              ),
+              Text("${(_volume * 100).toInt()}%"),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text("Close"),
+            ),
+          ],
+        );
+      },
     );
   }
 }

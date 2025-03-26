@@ -40,11 +40,46 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
     });
   }
 
-  Future<void> playMusic(String musicPath) async {
+  // 推荐音乐列表（标题 + 音乐文件）
+  final List<Map<String, String>> musicList = [
+    {"title": "Romantic", "file": "assets/audio/romantic.mp3"},
+    {"title": "Christmas", "file": "assets/audio/christmas.mp3"},
+    {"title": "Dream", "file": "assets/audio/dream.mp3"},
+    {"title": "Hip Hop", "file": "assets/audio/hiphop.mp3"},
+    {"title": "Holiday", "file": "assets/audio/holiday.mp3"},
+    {"title": "Relax", "file": "assets/audio/relax.mp3"},
+    {"title": "Yoga", "file": "assets/audio/yoga.mp3"},
+    {"title": "New Start", "file": "assets/audio/newstart.mp3"},
+    {"title": "Blue Day", "file": "assets/audio/blueday.mp3"},
+    {"title": "Night Sky", "file": "assets/audio/nightsky.mp3"},
+  ];
+
+  Future<void> playMusic(String musicTitle) async {
     try {
-      await _audioPlayer.setReleaseMode(ReleaseMode.stop);
-      await _audioPlayer.setVolume(1.0);
-      await _audioPlayer.play(AssetSource("audio/$musicPath"));
+      // 查找音乐文件路径
+      Map<String, String>? musicItem = musicList.firstWhere(
+        (music) => music["title"] == musicTitle,
+        orElse: () => {"file": ""},
+      );
+
+      String? musicPath = musicItem["file"];
+      if (musicPath == null || musicPath.isEmpty) {
+        print("Music file not found for title: $musicTitle");
+        return;
+      }
+
+      // **去掉 assets/ 前缀**
+      String assetPath = musicPath.replaceFirst('assets/', '');
+
+      await _audioPlayer.stop();
+      await _audioPlayer.setSource(AssetSource(assetPath));
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.resume(); // `resume()` 比 `play()` 更稳定
+
+      setState(() {
+        isPlaying = true;
+      });
+
       print("Now playing: $musicPath");
     } catch (e) {
       print("Error playing audio: $e");
@@ -52,19 +87,29 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
   }
 
   void stopMusic() async {
-    await _audioPlayer.stop();
-    setState(() {
-      isPlaying = false;
-    });
+    if (!isPlaying) return; // Avoid redundant execution
+
+    try {
+      await _audioPlayer.stop();
+      await _audioPlayer.release(); // Fully reset the player
+      setState(() {
+        isPlaying = false;
+      });
+      print("Music stopped and player reset.");
+    } catch (e) {
+      print("Error stopping music: $e");
+    }
   }
 
   void toggleMusic() {
-    print("Selected music file: ${widget.selectedMusic}"); // 检查是否正确传值
+    print("Selected music file: ${widget.selectedMusic}"); // Debugging output
+
     if (isPlaying) {
       _audioPlayer.pause();
     } else {
-      playMusic(widget.selectedMusic); // 使用 `widget.selectedMusic`
+      playMusic(widget.selectedMusic); // Ensure correct file is played
     }
+
     setState(() {
       isPlaying = !isPlaying;
     });
@@ -181,7 +226,10 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.selectedMusic.split('/').last,
+                              widget.selectedMusic
+                                  .split('/')
+                                  .last
+                                  .replaceAll('.mp3', ''),
                               style:
                                   TextStyle(color: Colors.white, fontSize: 14),
                               overflow: TextOverflow.ellipsis,

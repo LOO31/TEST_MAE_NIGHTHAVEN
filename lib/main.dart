@@ -15,7 +15,7 @@ import 'admin/admin_userManagement.dart';
 import '/user/sleep_tracker.dart';
 import '/user/diary.dart';
 import '/user/ai_doctor_service.dart';
-// import '/user/report_screen.dart';
+import '/user/sleep_report.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,10 +37,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      initialRoute: '/', // 默认进入 WelcomePage
+      initialRoute: '/', // WelcomePage
       onGenerateRoute: (settings) {
-        final args =
-            settings.arguments as Map<String, dynamic>? ?? {}; // 确保 args 不为空
+        final args = settings.arguments as Map<String, dynamic>? ?? {};
 
         switch (settings.name) {
           case '/':
@@ -90,8 +89,11 @@ class MyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (context) => AIDoctorService(email: args['email']),
             );
-          // case '/report':
-          //   return MaterialPageRoute(builder: (context) => ReportScreen());
+          case '/report':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            final userId = args['userId'] ?? '';
+            return MaterialPageRoute(
+                builder: (context) => SleepReport(userId: userId));
 
           default:
             return MaterialPageRoute(builder: (context) => const WelcomePage());

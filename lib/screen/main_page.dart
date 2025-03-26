@@ -8,6 +8,7 @@ import '/user/sleep_tracker.dart';
 import '/user/profile_setting.dart';
 import '/user/diary.dart';
 import '/user/ai_doctor_service.dart';
+import '/user/sleep_report.dart';
 
 class MainPage extends StatefulWidget {
   final String email;
@@ -326,12 +327,12 @@ class _MainPageState extends State<MainPage> {
       backgroundColor: const Color(0xFF4A148C),
       selectedItemColor: Colors.black,
       unselectedItemColor: const Color(0xFF9C27B0),
-      type: BottomNavigationBarType.fixed, // 确保所有标签可见
-      showUnselectedLabels: true, // 确保未选中项的标签也可见
-      currentIndex: _selectedIndex, // 添加当前索引
+      type: BottomNavigationBarType.fixed,
+      showUnselectedLabels: true,
+      currentIndex: _selectedIndex,
       onTap: (index) {
         setState(() {
-          _selectedIndex = index; // 更新索引
+          _selectedIndex = index;
         });
 
         if (index == 0) {
@@ -353,6 +354,15 @@ class _MainPageState extends State<MainPage> {
             context,
             MaterialPageRoute(
               builder: (context) => AIDoctorService(email: widget.email),
+            ),
+          );
+        } else if (index == 3) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SleepReport(
+                userId: '',
+              ),
             ),
           );
         }
