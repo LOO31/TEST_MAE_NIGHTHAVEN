@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../admin/admin_dashboard.dart';
+import '../doctor/doctor_dashboard.dart';
 import 'main_page.dart';
 import 'mobile_register.dart';
 
@@ -77,6 +78,9 @@ class _MobileLoginState extends State<MobileLogin> {
       Widget nextPage;
       if (userRole == 'Admin') {
         nextPage = AdminDashboard(email: email);
+      } else if (userRole == 'Doctor') {
+        nextPage = DoctorDashboard(email: email);
+
       } else {
         nextPage = MainPage(email: email);
       }

@@ -7,7 +7,6 @@ import 'screen/mobile_register.dart';
 import 'screen/mobile_login.dart';
 import 'screen/main_page.dart';
 import 'admin/admin_dashboard.dart';
-import 'admin/admin_userManagement.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,8 +59,10 @@ class MyApp extends StatelessWidget {
               builder: (context) => MainPage(email: args['email']),
             );
           case '/adminUserManagement':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
-                builder: (context) => const AdminUserManagement());
+              builder: (context) => AdminDashboard(email: args['email']),
+            );
           default:
             return MaterialPageRoute(builder: (context) => const WelcomePage());
         }
