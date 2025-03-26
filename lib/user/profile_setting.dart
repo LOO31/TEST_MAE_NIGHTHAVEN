@@ -141,7 +141,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
             ),
             SizedBox(height: 20),
             // Settings Section
-            _buildSettingItem("Notification", "On"),
+            // _buildSettingItem("Notification", "On"),
             _buildSettingItem("Sound", "${(_volume * 100).toInt()}%",
                 onTap: _showVolumeDialog),
             _buildSettingItem("Privacy Policy", "More"),
