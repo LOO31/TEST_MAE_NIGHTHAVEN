@@ -16,7 +16,7 @@ class DoctorAppointmentsPage extends StatefulWidget {
 }
 
 class _DoctorAppointmentsPageState extends State<DoctorAppointmentsPage> {
-  int _selectedIndex = 2;
+  final int _selectedIndex = 2;
   DateTime _selectedDay = DateTime.now();
   Map<DateTime, List<Map<String, String>>> _appointments =
       {}; // Initialize as empty Map

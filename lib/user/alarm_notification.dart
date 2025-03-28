@@ -12,19 +12,35 @@ class AlarmNotificationPage extends StatefulWidget {
   _AlarmNotificationPageState createState() => _AlarmNotificationPageState();
 }
 
-class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
+class _AlarmNotificationPageState extends State<AlarmNotificationPage>
+    with SingleTickerProviderStateMixin {
   double progress = 0.0;
   int totalTime = 240; // 4 minutes
   int remainingTime = 240;
   Timer? timer;
   final AudioPlayer _audioPlayer = AudioPlayer();
   bool isPlaying = false;
+  late AnimationController _animationController;
+  late Animation<Offset> _arrowAnimation;
 
   @override
   void initState() {
     super.initState();
     startTimer();
-    playMusic(widget.selectedMusic); // Start playing music when page loads
+    playMusic(widget.selectedMusic);
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 700),
+    )..repeat(reverse: true);
+
+    _arrowAnimation = Tween<Offset>(
+      begin: Offset(0, 0),
+      end: Offset(0, -0.3),
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   void startTimer() {
@@ -40,7 +56,6 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
     });
   }
 
-  // 推荐音乐列表（标题 + 音乐文件）
   final List<Map<String, String>> musicList = [
     {"title": "Romantic", "file": "assets/audio/romantic.mp3"},
     {"title": "Christmas", "file": "assets/audio/christmas.mp3"},
@@ -56,62 +71,35 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
 
   Future<void> playMusic(String musicTitle) async {
     try {
-      // 查找音乐文件路径
       Map<String, String>? musicItem = musicList.firstWhere(
         (music) => music["title"] == musicTitle,
         orElse: () => {"file": ""},
       );
 
       String? musicPath = musicItem["file"];
-      if (musicPath == null || musicPath.isEmpty) {
-        print("Music file not found for title: $musicTitle");
-        return;
-      }
+      if (musicPath == null || musicPath.isEmpty) return;
 
-      // **去掉 assets/ 前缀**
       String assetPath = musicPath.replaceFirst('assets/', '');
 
       await _audioPlayer.stop();
       await _audioPlayer.setSource(AssetSource(assetPath));
       await _audioPlayer.setReleaseMode(ReleaseMode.loop);
-      await _audioPlayer.resume(); // `resume()` 比 `play()` 更稳定
+      await _audioPlayer.resume();
 
       setState(() {
         isPlaying = true;
       });
-
-      print("Now playing: $musicPath");
     } catch (e) {
       print("Error playing audio: $e");
     }
   }
 
   void stopMusic() async {
-    if (!isPlaying) return; // Avoid redundant execution
-
-    try {
-      await _audioPlayer.stop();
-      await _audioPlayer.release(); // Fully reset the player
-      setState(() {
-        isPlaying = false;
-      });
-      print("Music stopped and player reset.");
-    } catch (e) {
-      print("Error stopping music: $e");
-    }
-  }
-
-  void toggleMusic() {
-    print("Selected music file: ${widget.selectedMusic}"); // Debugging output
-
-    if (isPlaying) {
-      _audioPlayer.pause();
-    } else {
-      playMusic(widget.selectedMusic); // Ensure correct file is played
-    }
-
+    if (!isPlaying) return;
+    await _audioPlayer.stop();
+    await _audioPlayer.release();
     setState(() {
-      isPlaying = !isPlaying;
+      isPlaying = false;
     });
   }
 
@@ -129,6 +117,7 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
   void dispose() {
     timer?.cancel();
     _audioPlayer.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -140,44 +129,22 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Back Button
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () {
-                  stopMusic();
-                  Navigator.pop(context, widget.selectedMusic);
-                },
-              ),
-            ),
-
-            SizedBox(height: 10),
-
-            // App Name
-            Center(
+            // Header
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 20),
               child: Text(
                 "NightHaven",
                 style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold),
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
 
-            SizedBox(height: 10),
+            SizedBox(height: 30),
 
-            // Greeting
-            Center(
-              child: Text(
-                "Good Night",
-                style: TextStyle(color: Colors.white, fontSize: 22),
-              ),
-            ),
-
-            SizedBox(height: 10),
-
-            // Countdown Timer + Progress Circle
+            // Countdown Timer
             Stack(
               alignment: Alignment.center,
               children: [
@@ -185,117 +152,97 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
                   size: Size(180, 180),
                   painter: ArcPainter(progress),
                 ),
-                Column(
-                  children: [
-                    Text(
-                      "${(remainingTime ~/ 60).toString().padLeft(2, '0')} : ${(remainingTime % 60).toString().padLeft(2, '0')}",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 40,
-                          fontWeight: FontWeight.bold),
-                    ),
-                    SizedBox(height: 10),
-                    Image.asset('assets/images/sleep.jpg', width: 80),
-                  ],
-                ),
-              ],
-            ),
-
-            SizedBox(height: 20),
-
-            // Music Player & Alarm Time
-            Column(
-              children: [
-                // Music Player
-                Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.asset('assets/images/music.webp',
-                            width: 40, height: 40, fit: BoxFit.cover),
-                      ),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              widget.selectedMusic
-                                  .split('/')
-                                  .last
-                                  .replaceAll('.mp3', ''),
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 14),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              isPlaying ? "Playing • 10 min" : "Paused",
-                              style: TextStyle(
-                                  color: Colors.white70, fontSize: 12),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(
-                          isPlaying
-                              ? Icons.pause_circle_filled
-                              : Icons.play_circle_filled,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                        onPressed: toggleMusic,
-                      ),
-                    ],
-                  ),
-                ),
-
-                SizedBox(height: 10),
-
-                // Alarm Time
-                Container(
-                  width: 100,
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white10,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.alarm, color: Colors.white, size: 20),
-                      SizedBox(width: 5),
-                      Text("04:00",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                          overflow: TextOverflow.ellipsis),
-                    ],
+                Text(
+                  "${(remainingTime ~/ 60).toString().padLeft(2, '0')} : ${(remainingTime % 60).toString().padLeft(2, '0')}",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
 
-            SizedBox(height: 30),
+            SizedBox(height: 80),
+
+            // Music Player
+Padding(
+  padding: EdgeInsets.symmetric(horizontal: 20),
+  child: Container(
+    padding: EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: Colors.white10,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.asset(
+            'assets/images/music.webp',
+            width: 50,
+            height: 50,
+            fit: BoxFit.cover,
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.selectedMusic,
+                style: TextStyle(color: Colors.white, fontSize: 16),
+                overflow: TextOverflow.ellipsis,
+              ),
+              SizedBox(height: 4),
+              Text(
+                isPlaying ? "Playing" : "Paused",
+                style: TextStyle(
+                  color: isPlaying ? Colors.white70 : Colors.white70,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: Icon(
+            isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+            color: Colors.white,
+            size: 35,
+          ),
+          onPressed: () {
+            if (isPlaying) {
+              stopMusic();
+            } else {
+              playMusic(widget.selectedMusic);
+            }
+          },
+        ),
+      ],
+    ),
+  ),
+),
+
+
+            Spacer(),
 
             // Swipe Up to Stop
             GestureDetector(
               onVerticalDragEnd: (details) {
-                if (details.primaryVelocity != null &&
-                    details.primaryVelocity! < -50) {
+                if (details.primaryVelocity != null && details.primaryVelocity! < -50) {
                   stopAlarm();
                 }
               },
               child: Column(
                 children: [
-                  Icon(Icons.keyboard_arrow_up, color: Colors.white, size: 40),
-                  Text("Swipe up to Stop",
-                      style: TextStyle(color: Colors.white, fontSize: 14)),
+                  SlideTransition(
+                    position: _arrowAnimation,
+                    child: Icon(Icons.keyboard_arrow_up, color: Colors.white, size: 40),
+                  ),
+                  Text("Swipe up to Stop", style: TextStyle(color: Colors.white, fontSize: 16)),
+                  SizedBox(height: 30),
                 ],
               ),
             ),
@@ -306,37 +253,28 @@ class _AlarmNotificationPageState extends State<AlarmNotificationPage> {
   }
 }
 
-// Progress Bar Painter
 class ArcPainter extends CustomPainter {
   final double progress;
-
   ArcPainter(this.progress);
 
   @override
   void paint(Canvas canvas, Size size) {
-    Paint circlePaint = Paint()
-      ..color = Colors.white24
+    Paint backgroundPaint = Paint()
+      ..color = Colors.white30
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6;
 
     Paint progressPaint = Paint()
-      ..color = Colors.purpleAccent
+      ..color = Colors.blueAccent
       ..style = PaintingStyle.stroke
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round;
 
-    Offset center = Offset(size.width / 2, size.height / 2);
-    double radius = size.width / 2;
-
-    canvas.drawCircle(center, radius, circlePaint);
-
-    double startAngle = -pi / 2;
-    double sweepAngle = progress * 2 * pi;
-
+    canvas.drawCircle(size.center(Offset.zero), size.width / 2, backgroundPaint);
     canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      sweepAngle,
+      Rect.fromCircle(center: size.center(Offset.zero), radius: size.width / 2),
+      -pi / 2,
+      2 * pi * progress,
       false,
       progressPaint,
     );

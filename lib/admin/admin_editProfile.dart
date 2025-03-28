@@ -14,14 +14,14 @@ class AdminEditProfilePage extends StatefulWidget {
   final String createdAt;
 
   const AdminEditProfilePage({
-    Key? key,
+    super.key,
     required this.userId,
     required this.currentName,
     required this.currentEmail,
     required this.currentRole,
     required this.currentProfilePic,
     required this.createdAt,
-  }) : super(key: key);
+  });
   
   @override
   _AdminEditProfilePageState createState() => _AdminEditProfilePageState();

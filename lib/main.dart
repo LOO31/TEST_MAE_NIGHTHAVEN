@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'admin/admin_userManagement.dart';
 import 'firebase_options.dart';
 
 // Import screens
@@ -71,7 +72,7 @@ class MyApp extends StatelessWidget {
           case '/adminUserManagement':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
-                builder: (context) => const AdminUserManagement()
+                builder: (context) =>  AdminUserManagement(email: args['email'])
             );
           // routes for user features
           case '/sleepTracker':
@@ -91,9 +92,8 @@ class MyApp extends StatelessWidget {
             );
           case '/report':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
-            final userId = args['userId'] ?? '';
             return MaterialPageRoute(
-                builder: (context) => SleepReport(userId: userId));
+                builder: (context) => SleepReport(email: args['email']));
 
           default:
             return MaterialPageRoute(builder: (context) => const WelcomePage());

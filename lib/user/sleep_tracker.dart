@@ -104,51 +104,95 @@ class _SleepTrackerState extends State<SleepTracker> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return Dialog(
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          title: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.green, size: 28),
-              SizedBox(width: 10),
-              Text("Success"),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Set alarm successful!"),
-              SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          AlarmNotificationPage(selectedMusic: chosenMusic),
-                    ),
-                  );
-                },
-                icon: Icon(Icons.music_note, color: Colors.white),
-                label: Text("Play Music"),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                /// 成功图标
+                Icon(Icons.check_circle, color: Colors.green, size: 60),
+                SizedBox(height: 15),
+
+                /// 标题
+                Text(
+                  "Alarm Set Successfully!",
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text("OK"),
+                SizedBox(height: 10),
+
+                /// 文字说明
+                Text(
+                  "Your alarm has been set. You can preview your selected music now.",
+                  style: TextStyle(color: Colors.black38, fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 20),
+
+                /// 按钮区域
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    /// 取消按钮
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          }
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white70,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child:
+                            Text("OK", style: TextStyle(color: Colors.black45)),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+
+                    /// 播放音乐按钮
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AlarmNotificationPage(
+                                  selectedMusic: chosenMusic),
+                            ),
+                          );
+                        },
+                        icon: Icon(Icons.music_note, color: Colors.white),
+                        label: Text(
+                          "Play Music",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );
@@ -325,138 +369,153 @@ class _SleepTrackerState extends State<SleepTracker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF091E40),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
-        title: Text('Sleep Tracker', style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            height: 250,
-            child: SfRadialGauge(
-              axes: [
-                RadialAxis(
-                  minimum: 4,
-                  maximum: 12,
-                  interval: 1,
-                  startAngle: 270,
-                  endAngle: 270,
-                  axisLineStyle: AxisLineStyle(
-                    thickness: 20,
-                    gradient: SweepGradient(
-                      colors: [Colors.purpleAccent, Color(0xFF66363A)],
-                    ),
-                  ),
-                  pointers: [
-                    MarkerPointer(
-                      value: sleepDuration,
-                      markerHeight: 20,
-                      markerWidth: 20,
-                      markerType: MarkerType.circle,
-                      color: Colors.white,
-                      enableDragging: true,
-                      onValueChanged: _adjustSleepDuration,
-                    ),
-                  ],
-                  annotations: [
-                    GaugeAnnotation(
-                      widget: Text(
-                        '${sleepDuration.toInt()} hr 00m',
-                        style: TextStyle(color: Colors.white, fontSize: 20),
+        child: Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () => Navigator.pop(context),
+            ),
+            title: Text('Sleep Tracker', style: TextStyle(color: Colors.white)),
+            centerTitle: true,
+          ),
+          body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                height: 250, // 调整 Gauge 高度
+                child: SfRadialGauge(
+                  axes: [
+                    RadialAxis(
+                      minimum: 4,
+                      maximum: 12,
+                      interval: 1,
+                      startAngle: 270,
+                      endAngle: 270,
+                      axisLineStyle: AxisLineStyle(
+                        thickness: 20,
+                        gradient: SweepGradient(
+                          colors: [
+                            Color.fromARGB(255, 136, 206, 206),
+                            Color.fromARGB(255, 71, 111, 119)
+                          ],
+                        ),
                       ),
-                      angle: 90,
-                      positionFactor: 0.5,
+                      pointers: [
+                        MarkerPointer(
+                          value: sleepDuration,
+                          markerHeight: 20,
+                          markerWidth: 20,
+                          markerType: MarkerType.circle,
+                          color: Colors.white,
+                          enableDragging: true,
+                          onValueChanged: _adjustSleepDuration,
+                        ),
+                      ],
+                      annotations: [
+                        GaugeAnnotation(
+                          widget: Text(
+                            '${sleepDuration.toInt()} hr 00m',
+                            style: TextStyle(color: Colors.white, fontSize: 20),
+                          ),
+                          angle: 90,
+                          positionFactor: 0.5,
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          // Add the Date Picker UI here above Bedtime
-          _buildOptionCard(
-            'Select Date',
-            '${selectedDate.toLocal()}'
-                .split(' ')[0], // Format the date to show yyyy-mm-dd
-            Icons.calendar_today,
-            () async {
-              DateTime? pickedDate = await showDatePicker(
-                context: context,
-                initialDate: selectedDate,
-                firstDate: DateTime(2000),
-                lastDate: DateTime(2101),
-              );
-              if (pickedDate != null && pickedDate != selectedDate)
-                setState(() {
-                  selectedDate = pickedDate;
-                });
-            },
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildOptionCard('Bedtime', '${bedtime.format(context)}',
-                  Icons.nightlight_round, () async {
-                TimeOfDay? picked = await showTimePicker(
-                  context: context,
-                  initialTime: bedtime,
-                );
-                if (picked != null) _setBedtime(picked);
-              }),
-              SizedBox(width: 10),
-              _buildOptionCard('Alarm', alarmTime.format(context), Icons.alarm,
+              ),
+              SizedBox(height: 15),
+              _buildOptionCard(
+                'Select Date',
+                '${selectedDate.toLocal()}'.split(' ')[0],
+                Icons.calendar_today,
+                () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2101),
+                  );
+                  if (pickedDate != null && pickedDate != selectedDate) {
+                    setState(() {
+                      selectedDate = pickedDate;
+                    });
+                  }
+                },
+              ),
+              SizedBox(height: 15),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildOptionCard('Bedtime', bedtime.format(context),
+                      Icons.nightlight_round, () async {
+                    TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: bedtime,
+                    );
+                    if (picked != null) _setBedtime(picked);
+                  }),
+                  SizedBox(width: 10),
+                  _buildOptionCard(
+                      'Alarm', alarmTime.format(context), Icons.alarm,
+                      () async {
+                    TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: alarmTime,
+                    );
+                    if (picked != null) _setAlarmTime(picked);
+                  }),
+                ],
+              ),
+              SizedBox(height: 10),
+              _buildListTile(
+                  'Sleep Duration', '${sleepDuration.toInt()} hr', Icons.timer),
+              _buildListTile('Choose Music', chosenMusic, Icons.music_note,
                   () async {
-                TimeOfDay? picked = await showTimePicker(
-                  context: context,
-                  initialTime: alarmTime,
+                final selectedMusic = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SelectMusicPage()),
                 );
-                if (picked != null) _setAlarmTime(picked);
+
+                if (selectedMusic != null) {
+                  setState(() {
+                    chosenMusic = selectedMusic;
+                  });
+                }
               }),
+              SizedBox(height: 15),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _isStartButtonEnabled() ? Colors.black : Colors.blueGrey,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                  padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
+                onPressed: _isStartButtonEnabled()
+                    ? () async {
+                        await saveSleepData();
+                        _showSuccessDialog();
+                      }
+                    : null,
+                child: Text('Start',
+                    style: TextStyle(fontSize: 18, color: Colors.white)),
+              ),
             ],
           ),
-          SizedBox(height: 20),
-          _buildListTile(
-              'Sleep Duration', '${sleepDuration.toInt()} hr', Icons.timer),
-          _buildListTile('Choose Music', chosenMusic, Icons.music_note,
-              () async {
-            final selectedMusic = await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SelectMusicPage()),
-            );
-
-            if (selectedMusic != null) {
-              setState(() {
-                chosenMusic = selectedMusic; // Store selected music
-              });
-            }
-          }),
-          SizedBox(height: 20),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _isStartButtonEnabled() ? Colors.purpleAccent : Colors.grey,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-            ),
-            onPressed: _isStartButtonEnabled()
-                ? () async {
-                    await saveSleepData();
-                    // await saveSleepData();
-                    _showSuccessDialog();
-                  }
-                : null,
-            child: Text('Start', style: TextStyle(fontSize: 18)),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -467,7 +526,7 @@ class _SleepTrackerState extends State<SleepTracker> {
       onTap: onTap,
       child: Container(
         width: 150,
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white12,
           borderRadius: BorderRadius.circular(10),
@@ -480,7 +539,7 @@ class _SleepTrackerState extends State<SleepTracker> {
             SizedBox(height: 5),
             Text(value,
                 style: TextStyle(
-                    color: Colors.purpleAccent,
+                    color: const Color.fromARGB(255, 102, 194, 227),
                     fontSize: 18,
                     fontWeight: FontWeight.bold)),
           ],
@@ -512,7 +571,7 @@ class _SleepTrackerState extends State<SleepTracker> {
             ),
             Text(value,
                 style: TextStyle(
-                    color: Colors.purpleAccent,
+                    color: const Color.fromARGB(255, 102, 194, 227),
                     fontSize: 18,
                     fontWeight: FontWeight.bold)),
           ],

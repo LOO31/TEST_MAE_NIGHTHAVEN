@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_volume_controller/flutter_volume_controller.dart';
+import '../screen/app_versions.dart';
+import '../screen/privacy_policy.dart';
+import '../screen/terms_and_conditions.dart';
 import '/user/edit_personal_info.dart';
 
 class ProfileSettings extends StatefulWidget {
+  const ProfileSettings({super.key});
+
   @override
   _ProfileSettingsState createState() => _ProfileSettingsState();
 }
@@ -12,8 +17,8 @@ class ProfileSettings extends StatefulWidget {
 class _ProfileSettingsState extends State<ProfileSettings> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  String username = "Loading...";
-  String email = "Loading...";
+  String username = "Fetching...";
+  String email = "Fetching...";
   double _volume = 0.75; // 默认音量 75%
 
   @override
@@ -26,6 +31,11 @@ class _ProfileSettingsState extends State<ProfileSettings> {
   Future<void> _loadUserData() async {
     User? user = _auth.currentUser;
     if (user != null) {
+      setState(() {
+        username = "Fetching...";
+        email = "Fetching...";
+      });
+
       QuerySnapshot query = await _firestore
           .collection("users")
           .where("auth_uid", isEqualTo: user.uid)
@@ -37,6 +47,11 @@ class _ProfileSettingsState extends State<ProfileSettings> {
         setState(() {
           username = userData["username"] ?? "No username";
           email = userData["email"] ?? "No email";
+        });
+      } else {
+        setState(() {
+          username = "Not Found";
+          email = "Not Found";
         });
       }
     }
@@ -63,8 +78,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
           style: TextStyle(color: Colors.white),
         ),
         backgroundColor: Colors.black,
-        iconTheme:
-            IconThemeData(color: Colors.white), //back nav in white colour
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Container(
         padding: EdgeInsets.all(20),
@@ -72,7 +86,7 @@ class _ProfileSettingsState extends State<ProfileSettings> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.black, Colors.purple.shade900],
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
           ),
         ),
         child: Column(
@@ -102,7 +116,6 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                         IconButton(
                           icon: Icon(Icons.edit, color: Colors.white70),
                           onPressed: () {
-                            // switch to "edit_personal_info page"
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -113,27 +126,33 @@ class _ProfileSettingsState extends State<ProfileSettings> {
                         ),
                       ],
                     ),
+                    Divider(color: Colors.white30),
                     SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Icon(Icons.person, color: Colors.white70),
-                        SizedBox(width: 10),
-                        Text(
-                          username,
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ],
+                    ListTile(
+                      leading: Icon(Icons.person, color: Colors.white70),
+                      title: Text(
+                        username,
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      subtitle: username == "Fetching..."
+                          ? LinearProgressIndicator(
+                              color: Colors.blueAccent,
+                              backgroundColor: Colors.white24,
+                            )
+                          : null,
                     ),
-                    SizedBox(height: 5),
-                    Row(
-                      children: [
-                        Icon(Icons.email, color: Colors.white70),
-                        SizedBox(width: 10),
-                        Text(
-                          email,
-                          style: TextStyle(fontSize: 16, color: Colors.white),
-                        ),
-                      ],
+                    ListTile(
+                      leading: Icon(Icons.email, color: Colors.white70),
+                      title: Text(
+                        email,
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      subtitle: email == "Fetching..."
+                          ? LinearProgressIndicator(
+                              color: Colors.blueAccent,
+                              backgroundColor: Colors.white24,
+                            )
+                          : null,
                     ),
                   ],
                 ),
@@ -141,12 +160,27 @@ class _ProfileSettingsState extends State<ProfileSettings> {
             ),
             SizedBox(height: 20),
             // Settings Section
-            // _buildSettingItem("Notification", "On"),
             _buildSettingItem("Sound", "${(_volume * 100).toInt()}%",
                 onTap: _showVolumeDialog),
-            _buildSettingItem("Privacy Policy", "More"),
-            _buildSettingItem("Terms & Conditions", "More"),
-            _buildSettingItem("App Version", "More"),
+            _buildSettingItem("Privacy Policy", "More", onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => PrivacyPolicyPage(email: email)));
+            }),
+            _buildSettingItem("Terms & Conditions", "More", onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          TermsAndConditionsPage(email: email)));
+            }),
+            _buildSettingItem("App Version", "1.0.0", onTap: () {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => AppVersionPage(email: email)));
+            }),
           ],
         ),
       ),

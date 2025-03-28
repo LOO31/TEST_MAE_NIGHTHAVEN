@@ -347,9 +347,9 @@ class _NotesRecommendationsPageState extends State<NotesRecommendationsPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAIRecommendations,
         backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.android, color: Colors.white),
         elevation: 5,
         splashColor: Colors.deepPurple,
+        child: const Icon(Icons.android, color: Colors.white),
       ),
     );
   }

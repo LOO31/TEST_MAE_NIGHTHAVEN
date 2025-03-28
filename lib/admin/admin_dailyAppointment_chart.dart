@@ -4,6 +4,8 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 class DailyAppointmentsChart extends StatefulWidget {
+  const DailyAppointmentsChart({super.key});
+
   @override
   _DailyAppointmentsChartState createState() => _DailyAppointmentsChartState();
 }

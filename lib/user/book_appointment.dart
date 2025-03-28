@@ -7,7 +7,7 @@ import 'appointment_list_page.dart';
 class BookAppointmentPage extends StatefulWidget {
   final doctor;
 
-  BookAppointmentPage({required this.doctor, Key? key}) : super(key: key);
+  const BookAppointmentPage({required this.doctor, super.key});
 
   @override
   _BookAppointmentPageState createState() => _BookAppointmentPageState();
@@ -44,27 +44,13 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     }
   }
 
-  // void _selectTime() async {
-  //   TimeOfDay? pickedTime = await showTimePicker(
-  //     context: context,
-  //     initialTime: TimeOfDay.now(),
-  //   );
-  //   if (pickedTime != null) {
-  //     setState(() {
-  //       selectedTime = pickedTime;
-  //       _timeController.text = pickedTime.format(context);
-  //     });
-  //   }
-  // }
-
   void _selectTime() async {
     TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (BuildContext context, Widget? child) {
+      builder: (context, child) {
         return MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(alwaysUse24HourFormat: false), // Force 12-hour format
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
           child: child!,
         );
       },
@@ -73,169 +59,52 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     if (pickedTime != null) {
       setState(() {
         selectedTime = pickedTime;
-        _timeController.text =
-            pickedTime.format(context); // Ensure AM/PM format
+        _timeController.text = pickedTime.format(context);
       });
     }
   }
 
   Future<String> _getCustomUid() async {
-    User? user = FirebaseAuth.instance.currentUser;
+    User? user = _auth.currentUser;
     if (user == null) throw Exception("User not logged in");
 
-    try {
-      QuerySnapshot query = await FirebaseFirestore.instance
-          .collection("users")
-          .where("auth_uid", isEqualTo: user.uid)
-          .limit(1)
-          .get();
+    var query = await _firestore
+        .collection("users")
+        .where("auth_uid", isEqualTo: user.uid)
+        .limit(1)
+        .get();
 
-      if (query.docs.isNotEmpty) {
-        return query.docs.first.id; // Get customUserId (u1, u2, etc.)
-      } else {
-        throw Exception("Custom ID not found for user.");
-      }
-    } catch (e) {
-      throw Exception("Error fetching custom UID: $e");
-    }
+    if (query.docs.isNotEmpty) return query.docs.first.id;
+    throw Exception("User ID not found");
   }
-
-  // Future<void> _submitAppointment() async {
-  //   if (!_formKey.currentState!.validate()) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text("Please fill in all the information")),
-  //     );
-  //     return;
-  //   }
-
-  //   if (selectedDate == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text("Please select a date")),
-  //     );
-  //     return;
-  //   }
-
-  //   if (selectedTime == null) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text("Please select a time")),
-  //     );
-  //     return;
-  //   }
-
-  //   try {
-  //     User? currentUser = FirebaseAuth.instance.currentUser;
-  //     if (currentUser == null) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text("User not logged in!")),
-  //       );
-  //       return;
-  //     }
-
-  //     // 获取用户的 Custom UID（例如 u1, u2）
-  //     String customUid = await _getCustomUid();
-
-  //     // 格式化日期和时间
-  //     String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
-  //     String formattedTime =
-  //         "${selectedTime!.hour}:${selectedTime!.minute.toString().padLeft(2, '0')}";
-
-  //     // 生成唯一的预约 ID
-  //     String appointmentId = "${formattedDate}_$formattedTime";
-
-  //     // Firestore 预约文档路径
-  //     DocumentReference appointmentRef = FirebaseFirestore.instance
-  //         .collection("appointments")
-  //         .doc(customUid) // 用户 ID（确保 Firestore 允许此路径）
-  //         .collection("user_appointments")
-  //         .doc(appointmentId);
-
-  //     // 检查是否已有相同的预约
-  //     var snapshot = await appointmentRef.get();
-  //     if (snapshot.exists) {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         const SnackBar(content: Text("This time is not available")),
-  //       );
-  //       return;
-  //     }
-
-  //     // 存储预约信息到 Firestore
-  //     await appointmentRef.set({
-  //       "userId": customUid, // 使用 u1, u2 等
-  //       "authUid": currentUser.uid, // Firebase Auth UID
-  //       "doctorId": widget.doctor.id, // 医生 ID
-  //       "doctorName": widget.doctor.name,
-  //       "date": formattedDate, // 日期
-  //       "time": formattedTime, // 时间
-  //       "firstName": _firstNameController.text.trim(),
-  //       "lastName": _lastNameController.text.trim(),
-  //       "email": _emailController.text.trim(),
-  //       "phone": _phoneController.text.trim(),
-  //       "problem": _problemController.text.trim(),
-  //       "timestamp": FieldValue.serverTimestamp(),
-  //     });
-
-  //     print("Appointment saved successfully!");
-
-  //     // 成功后弹出对话框
-  //     _showDialog("Appointment booked successfully");
-  //   } catch (e) {
-  //     print("Error booking appointment: ${e.toString()}");
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text("Error: ${e.toString()}")),
-  //     );
-  //   }
-  // }
 
   Future<void> _submitAppointment() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please fill in all the information")),
+        const SnackBar(content: Text("Please fill in all the fields")),
       );
       return;
     }
 
-    if (selectedDate == null) {
+    if (selectedDate == null || selectedTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a date")),
-      );
-      return;
-    }
-
-    if (selectedTime == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select a time")),
+        const SnackBar(content: Text("Please select a date and time")),
       );
       return;
     }
 
     try {
-      User? currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("User not logged in!")),
-        );
-        return;
-      }
-
-      // Get custom user ID (e.g., u1, u2)
       String customUid = await _getCustomUid();
-
-      // Format date and time
       String formattedDate = DateFormat('yyyy-MM-dd').format(selectedDate!);
-      String formattedTime =
-          selectedTime!.format(context); // Ensure AM/PM format
-
-      // Generate a unique appointment ID
+      String formattedTime = selectedTime!.format(context);
       String appointmentId = "${formattedDate}_$formattedTime";
 
-      // Firestore appointment document path
-      DocumentReference appointmentRef = FirebaseFirestore.instance
+      DocumentReference appointmentRef = _firestore
           .collection("appointments")
-          .doc(customUid) // User ID (ensure Firestore allows this path)
+          .doc(customUid)
           .collection("user_appointments")
           .doc(appointmentId);
 
-      // Check if the appointment already exists
       var snapshot = await appointmentRef.get();
       if (snapshot.exists) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -244,14 +113,13 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
         return;
       }
 
-      // Save appointment details to Firestore
       await appointmentRef.set({
-        "userId": customUid, // Custom user ID (e.g., u1, u2)
-        "authUid": currentUser.uid, // Firebase Auth UID
-        "doctorId": widget.doctor.id, // Doctor ID
+        "userId": customUid,
+        "authUid": _auth.currentUser!.uid,
+        "doctorId": widget.doctor.id,
         "doctorName": widget.doctor.name,
-        "date": formattedDate, // Date
-        "time": formattedTime, // Time with AM/PM
+        "date": formattedDate,
+        "time": formattedTime,
         "firstName": _firstNameController.text.trim(),
         "lastName": _lastNameController.text.trim(),
         "email": _emailController.text.trim(),
@@ -260,12 +128,8 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
         "timestamp": FieldValue.serverTimestamp(),
       });
 
-      print("Appointment saved successfully!");
-
-      // Show success dialog
       _showDialog("Appointment booked successfully");
     } catch (e) {
-      print("Error booking appointment: ${e.toString()}");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: ${e.toString()}")),
       );
@@ -291,7 +155,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                 MaterialPageRoute(builder: (context) => AppointmentListPage()),
               );
             },
-            child: Text("View Appointment"),
+            child: Text("View Appointments"),
           ),
         ],
       ),
@@ -301,201 +165,201 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF1C1C3C), // 统一背景色，避免白色区域
+      backgroundColor: const Color.fromARGB(255, 102, 54, 58),
       appBar: AppBar(
-        title: Text("Book Appointment"),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
+        title: Text("Book Appointment", style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.black,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: Container(
+                width: double.infinity,
+        height: double.infinity,
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              _buildDoctorInfo(),
+              Form(
+                key: _formKey,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Card(
-                      color:
-                          Colors.white.withOpacity(0.1), // Slight transparency
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          radius: 30,
-                          backgroundImage: widget.doctor.image.isNotEmpty
-                              ? NetworkImage(widget.doctor.image)
-                              : AssetImage("assets/images/default.jpg")
-                                  as ImageProvider,
-                        ),
-                        title: Text(
-                          widget.doctor.name,
-                          style: TextStyle(color: Colors.white), // White text
-                        ),
-                        subtitle: Text(
-                          widget.doctor.email,
-                          style: TextStyle(
-                              color: Colors.white70), // Light white text
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          _buildTextField(_firstNameController, "First Name"),
-                          _buildTextField(_lastNameController, "Last Name"),
-                          _buildTextField(_emailController, "Email"),
-                          _buildTextField(_phoneController, "Phone"),
-                          _buildTextField(
-                              _problemController, "Describe your problem"),
-                          _buildDateField(),
-                          _buildTimeField(),
-                          SizedBox(height: 24),
-                        ],
-                      ),
-                    ),
+                    _buildTextField(_firstNameController, "First Name"),
+                    _buildTextField(_lastNameController, "Last Name"),
+                    _buildTextField(_emailController, "Email"),
+                    _buildTextField(_phoneController, "Phone"),
+                    _buildTextField(_problemController, "Describe your problem"),
+                    _buildDateField(),
+                    _buildTimeField(),
                   ],
                 ),
               ),
+            ],
+          ),
+        ),
+      ),
+  bottomNavigationBar: Padding(
+    padding: EdgeInsets.all(16),
+    child: GestureDetector(
+      onTap: _submitAppointment,
+      child: Container(
+        width: double.infinity,
+        height: 50,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.purpleAccent, Colors.deepPurple],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepPurple.withOpacity(0.3),
+              blurRadius: 10,
+              spreadRadius: 2,
+              offset: Offset(0, 4),
             ),
           ],
         ),
-      ),
-
-      /// bottomNavigationBar
-      bottomNavigationBar: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+        alignment: Alignment.center,
+        child: Text(
+          "Book Now",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(bottom: 10),
-            child: ElevatedButton(
-              onPressed: _submitAppointment,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurpleAccent,
-                foregroundColor: Colors.white,
-                minimumSize: Size(double.infinity, 50),
-              ),
-              child: Text("Submit"),
+      ),
+    ),
+  ),
+
+    );
+  }
+Widget _buildDoctorInfo() {
+  return Card(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
+    color: Colors.white.withOpacity(0.1),
+    elevation: 5,
+    margin: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+    child: Padding(
+      padding: EdgeInsets.all(16),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 40, // 放大头像
+            backgroundImage: widget.doctor.image.isNotEmpty
+                ? NetworkImage(widget.doctor.image)
+                : AssetImage("assets/images/default.jpg") as ImageProvider,
+          ),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.doctor.name,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20, // 字体更大
+                    fontWeight: FontWeight.bold, // 加粗
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  widget.doctor.email,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 16, // 字体稍微大一点
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
-  Widget _buildTextField(TextEditingController controller, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextFormField(
-        controller: controller,
-        style: TextStyle(color: Colors.white), // White text
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: Colors.white), // White label text
-          filled: true,
-          fillColor: Colors.black54, // **Dark semi-transparent background**
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide:
-                BorderSide(color: Colors.white, width: 2), // **White border**
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide:
-                BorderSide(color: Colors.white, width: 2), // **White border**
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(
-                color: Colors.white,
-                width: 2.5), // **Thicker white border when focused**
-          ),
-        ),
-        validator: (value) => value!.isEmpty ? "Required" : null,
-      ),
-    );
-  }
 
-  Widget _buildDateField() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextFormField(
-        controller: _dateController,
-        style: TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: "Date",
-          labelStyle: TextStyle(color: Colors.white),
-          filled: true,
-          fillColor: Colors.black54,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.white, width: 2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.white, width: 2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.white, width: 2.5),
-          ),
+Widget _buildTextField(TextEditingController controller, String label) {
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: 8),
+    child: TextFormField(
+      controller: controller,
+      style: TextStyle(color: Colors.white), // 输入的文本颜色
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.white), // Label 文字颜色
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.white), // 默认边框颜色
         ),
-        readOnly: true,
-        onTap: _selectDate,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.deepPurpleAccent), // 选中时的边框颜色
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
-  /// **Time Selection Field**
-  Widget _buildTimeField() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: TextFormField(
-        controller: _timeController,
-        style: TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          labelText: "Time",
-          labelStyle: TextStyle(color: Colors.white),
-          filled: true,
-          fillColor: Colors.black54,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.white, width: 2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.white, width: 2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.white, width: 2.5),
-          ),
+Widget _buildDateField() {
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: 8),
+    child: TextFormField(
+      controller: _dateController,
+      readOnly: true,
+      style: TextStyle(color: Colors.white), // 输入的文本颜色
+      decoration: InputDecoration(
+        labelText: "Select Date",
+        labelStyle: TextStyle(color: Colors.white), // Label 文字颜色
+        suffixIcon: Icon(Icons.calendar_today, color: Colors.white), // 图标颜色
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.white), // 默认边框颜色
         ),
-        readOnly: true,
-        onTap: _selectTime,
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.deepPurpleAccent), // 选中时的边框颜色
+        ),
       ),
-    );
-  }
+      onTap: _selectDate,
+    ),
+  );
+}
+
+Widget _buildTimeField() {
+  return Padding(
+    padding: EdgeInsets.symmetric(vertical: 8),
+    child: TextFormField(
+      controller: _timeController,
+      readOnly: true,
+      style: TextStyle(color: Colors.white), // 输入的文本颜色
+      decoration: InputDecoration(
+        labelText: "Select Time",
+        labelStyle: TextStyle(color: Colors.white), // Label 文字颜色
+        suffixIcon: Icon(Icons.access_time, color: Colors.white), // 图标颜色
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.white), // 默认边框颜色
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.deepPurpleAccent), // 选中时的边框颜色
+        ),
+      ),
+      onTap: _selectTime,
+    ),
+  );
+}
 }

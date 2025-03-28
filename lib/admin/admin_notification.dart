@@ -105,7 +105,7 @@ class _AdminNotificationPageState extends State<AdminNotificationPage> {
                                 title: "New User Registered",
                                 subtitle: "${data['username'] ?? 'Unknown user'} has joined",
                               );
-                            }).toList(),
+                            }),
                           ],
                           // Display new doctors if any
                           if (newDoctors.isNotEmpty) ...[
@@ -118,7 +118,7 @@ class _AdminNotificationPageState extends State<AdminNotificationPage> {
                                 title: "New Doctor Registered",
                                 subtitle: "Dr. ${data['username'] ?? 'Unknown doctor'} has joined",
                               );
-                            }).toList(),
+                            }),
                           ],
                           // Display follow-ups if any
                           if (followUps.isNotEmpty) ...[
@@ -181,7 +181,7 @@ class _AdminNotificationPageState extends State<AdminNotificationPage> {
                                   );
                                 },
                               );
-                            }).toList(),
+                            }),
                           ],
                           // Display message if no notifications
                           if (newUsers.isEmpty && newDoctors.isEmpty && followUps.isEmpty)

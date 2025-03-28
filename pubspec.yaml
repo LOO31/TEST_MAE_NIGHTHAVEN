@@ -59,6 +59,8 @@ dependencies:
   syncfusion_flutter_charts: ^28.2.12
   flutter_volume_controller: 1.3.3
   connectivity_plus: ^6.1.3
+  syncfusion_flutter_datepicker: ^28.2.11+1
+  animate_do: ^3.0.2
 
 dev_dependencies:
   flutter_test:
@@ -95,7 +97,7 @@ flutter:
     - assets/images/Forest_Night.jpg
     - assets/images/Full_Moon.png
     - assets/images/Ocean_Moon.jpg
-    - assets/images/sleep.jpg
+    - assets/images/sleep.png
     - assets/images/music.webp
     - assets/images/profile.jpg
     - assets/images/aichatbot.jpg
@@ -112,6 +114,18 @@ flutter:
     - assets/audio/newstart.mp3
     - assets/audio/blueday.mp3
     - assets/audio/nightsky.mp3
+    - assets/images/BlueDay.jpg 
+    - assets/images/Christmas.jpg
+    - assets/images/Dream.jpeg 
+    - assets/images/Dream2.jpg
+    - assets/images/HipHop.jpg 
+    - assets/images/Holiday.jpg
+    - assets/images/NewStart.jpeg
+    - assets/images/NightSky.jpg
+    - assets/images/Relax.jpg 
+    - assets/images/Romantic.jpg 
+    - assets/images/Romantic2.jpg
+    - assets/images/Yoga.jpg
 
   fonts:
     - family: LeckerliOne

@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ReviewNotesAndRecsPage extends StatelessWidget {
   final String email;
 
-  const ReviewNotesAndRecsPage({Key? key, required this.email}) : super(key: key);
+  const ReviewNotesAndRecsPage({super.key, required this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -96,7 +96,7 @@ class ReviewNotesAndRecsPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '$patientName',
+                  patientName,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
