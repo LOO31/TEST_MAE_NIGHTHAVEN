@@ -44,80 +44,87 @@ class AppointmentListPage extends StatelessWidget {
               "Appointment List",
               style: TextStyle(color: Colors.white),
             ),
-            backgroundColor: Colors.blueGrey[900],
+            backgroundColor: Colors.black,
             iconTheme: IconThemeData(color: Colors.white),
             leading: IconButton(
               icon: Icon(Icons.arrow_back),
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          backgroundColor: Colors.blueGrey[800],
-          body: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection("appointments")
-                .doc(userId)
-                .collection("user_appointments")
-                .orderBy("date", descending: false)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              }
-
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return Center(
-                  child: Text(
-                    "No Appointments Found",
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                  ),
-                );
-              }
-
-              List<Map<String, dynamic>> appointments =
-                  snapshot.data!.docs.map((doc) {
-                var data = doc.data() as Map<String, dynamic>;
-                data["id"] = doc.id; // 添加 Firebase 文档 ID
-                return data;
-              }).toList();
-
-              Map<String, List<Map<String, dynamic>>> groupedAppointments = {};
-              for (var appointment in appointments) {
-                String date = appointment["date"];
-                if (!groupedAppointments.containsKey(date)) {
-                  groupedAppointments[date] = [];
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF091E40), Color(0xFF66363A)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection("appointments")
+                  .doc(userId)
+                  .collection("user_appointments")
+                  .orderBy("date", descending: false)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
                 }
-                groupedAppointments[date]!.add(appointment);
-              }
 
-              return ListView(
-                padding: EdgeInsets.all(10),
-                children: groupedAppointments.entries.map((entry) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding:
-                            EdgeInsets.symmetric(vertical: 8, horizontal: 15),
-                        margin: EdgeInsets.symmetric(vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.purple[200],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          entry.key,
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                      ...entry.value
-                          .map((appointment) =>
-                              AppointmentCard(appointment, userId))
-                          .toList()
-                    ],
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Text(
+                      "No Appointments Found",
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
                   );
-                }).toList(),
-              );
-            },
+                }
+
+                List<Map<String, dynamic>> appointments =
+                    snapshot.data!.docs.map((doc) {
+                  var data = doc.data() as Map<String, dynamic>;
+                  data["id"] = doc.id; // 添加 Firebase 文档 ID
+                  return data;
+                }).toList();
+
+                Map<String, List<Map<String, dynamic>>> groupedAppointments = {};
+                for (var appointment in appointments) {
+                  String date = appointment["date"];
+                  if (!groupedAppointments.containsKey(date)) {
+                    groupedAppointments[date] = [];
+                  }
+                  groupedAppointments[date]!.add(appointment);
+                }
+
+                return ListView(
+                  padding: EdgeInsets.all(10),
+                  children: groupedAppointments.entries.map((entry) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(vertical: 8, horizontal: 15),
+                          margin: EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: const Color.fromARGB(255, 255, 255, 255),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            entry.key,
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        ...entry.value
+                            .map((appointment) =>
+                                AppointmentCard(appointment, userId))
+                      ],
+                    );
+                  }).toList(),
+                );
+              },
+            ),
           ),
         );
       },
@@ -130,7 +137,7 @@ class AppointmentCard extends StatelessWidget {
   final Map<String, dynamic> appointment;
   final String userId;
 
-  AppointmentCard(this.appointment, this.userId);
+  const AppointmentCard(this.appointment, this.userId, {super.key});
 
   Future<String?> _getDoctorImage(String doctorId) async {
     if (doctorId.isEmpty) return null;
@@ -279,7 +286,7 @@ class AppointmentCard extends StatelessWidget {
                               title: Column(
                                 children: [
                                   Icon(Icons.check_circle,
-                                      color: Colors.green, size: 60),
+                                      color: const Color.fromARGB(255, 236, 236, 236), size: 60),
                                   SizedBox(height: 10),
                                   Text("Change Appointment Info Successfully",
                                       textAlign: TextAlign.center),
@@ -332,7 +339,7 @@ class AppointmentCard extends StatelessWidget {
           margin: EdgeInsets.symmetric(vertical: 5),
           color: Colors.blueGrey[700],
           shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           child: ListTile(
             leading: CircleAvatar(
               backgroundImage:
@@ -341,7 +348,7 @@ class AppointmentCard extends StatelessWidget {
                       : null,
               radius: 30,
               child: imageUrl.isEmpty || !imageUrl.startsWith("http")
-                  ? Icon(Icons.person, size: 30, color: Colors.white)
+                  ? Icon(Icons.person, size: 10, color: Colors.white)
                   : null,
             ),
             title: Text(
@@ -351,18 +358,18 @@ class AppointmentCard extends StatelessWidget {
             ),
             subtitle: Text(
               "Problem: ${appointment["problem"] ?? "N/A"}\n"
-              "Schedule: ${appointment["date"]} at ${appointment["time"]}",
+              "Schedule: \n${appointment["date"]} at ${appointment["time"]}",
               style: TextStyle(color: Colors.white70),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit, color: Colors.green),
+                  icon: Icon(Icons.edit, color: Colors.white),
                   onPressed: () => _editAppointment(context),
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete, color: Colors.red),
+                  icon: Icon(Icons.delete, color: Colors.white),
                   onPressed: () => _deleteAppointment(context),
                 ),
               ],

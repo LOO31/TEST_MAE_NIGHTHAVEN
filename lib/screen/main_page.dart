@@ -102,10 +102,10 @@ class _MainPageState extends State<MainPage> {
           },
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.notifications, color: Colors.white),
+          //   onPressed: () {},
+          // ),
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () => _handleLogout(context),
@@ -115,10 +115,7 @@ class _MainPageState extends State<MainPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Colors.purpleAccent,
-              Color(0xFF66363A)
-            ], // Gradient background
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -267,23 +264,39 @@ class _MainPageState extends State<MainPage> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(deviceName,
-                  style: const TextStyle(color: Colors.white, fontSize: 16)),
-              Text("$battery • $status",
-                  style: const TextStyle(color: Colors.white70, fontSize: 14)),
-            ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  deviceName,
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                ),
+                Text(
+                  "$battery • $status",
+                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
+            ),
           ),
+          const Spacer(), // 固定图标位置
           const Icon(Icons.bookmark_border, color: Colors.white70),
-          ElevatedButton(
-            onPressed: () => _toggleConnection(deviceName),
-            style: ElevatedButton.styleFrom(
-                backgroundColor: isConnected ? Colors.red : Colors.green),
-            child: Text(isConnected ? "Disconnect" : "Connect"),
+          const SizedBox(width: 16), // 调整间距，使按钮对齐
+          SizedBox(
+            width: 120, // 调整宽度，确保按钮足够长
+            child: ElevatedButton(
+              onPressed: () => _toggleConnection(deviceName),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isConnected ? Colors.red : Colors.green,
+                minimumSize: const Size(120, 40), // 确保按钮有足够的宽度和高度
+                padding: const EdgeInsets.symmetric(horizontal: 16), // 增加内边距
+              ),
+              child: Text(
+                isConnected ? "Disconnect" : "Connect",
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ),
           ),
         ],
       ),
@@ -298,17 +311,20 @@ class _MainPageState extends State<MainPage> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             setState(() {
-              _showConnectedDevices = false; // Return to the main screen
+              _showConnectedDevices = false;
             });
           },
         ),
         const SizedBox(height: 10),
-        const Text(
-          "Connected Devices",
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        const Padding(
+          padding: EdgeInsets.only(left: 12.0), // 调整标题的位置
+          child: Text(
+            "Connected Devices",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -324,9 +340,9 @@ class _MainPageState extends State<MainPage> {
 
   Widget _buildBottomNavigation() {
     return BottomNavigationBar(
-      backgroundColor: const Color(0xFF4A148C),
-      selectedItemColor: Colors.black,
-      unselectedItemColor: const Color(0xFF9C27B0),
+      backgroundColor: Colors.black,
+      selectedItemColor: Colors.white,
+      unselectedItemColor: Colors.white70,
       type: BottomNavigationBarType.fixed,
       showUnselectedLabels: true,
       currentIndex: _selectedIndex,
@@ -361,7 +377,7 @@ class _MainPageState extends State<MainPage> {
             context,
             MaterialPageRoute(
               builder: (context) => SleepReport(
-                userId: '',
+                email: widget.email,
               ),
             ),
           );

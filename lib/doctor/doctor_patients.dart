@@ -15,7 +15,7 @@ class DoctorPatientsPage extends StatefulWidget {
 }
 
 class _DoctorPatientsPageState extends State<DoctorPatientsPage> {
-  int _selectedIndex = 1;
+  final int _selectedIndex = 1;
   String searchQuery = "";
   List<Map<String, dynamic>> patients = [];
   String? doctorId;

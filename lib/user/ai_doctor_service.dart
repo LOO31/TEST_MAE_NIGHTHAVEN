@@ -6,7 +6,7 @@ import 'appointment_list_page.dart';
 class AIDoctorService extends StatefulWidget {
   final String email;
 
-  const AIDoctorService({Key? key, required this.email}) : super(key: key);
+  const AIDoctorService({super.key, required this.email});
 
   @override
   _AIDoctorServiceState createState() => _AIDoctorServiceState();
@@ -50,7 +50,7 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.purpleAccent,
+        backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
         title: Text(
@@ -69,10 +69,10 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
           },
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.notifications, color: Colors.white),
-            onPressed: () {},
-          ),
+          // IconButton(
+          //   icon: Icon(Icons.notifications, color: Colors.white),
+          //   onPressed: () {},
+          // ),
         ],
       ),
       body: Container(
@@ -82,7 +82,7 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
           ),
         ),
         child: SafeArea(
@@ -92,8 +92,9 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
               SizedBox(height: 30),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent,
-                  minimumSize: const Size(200, 50),
+                  backgroundColor: Colors.blueGrey,
+                  minimumSize: const Size(250, 60), // 按钮变大
+                  textStyle: const TextStyle(fontSize: 20), // 字体变大
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -107,8 +108,9 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
               const SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent,
-                  minimumSize: const Size(200, 50),
+                  backgroundColor: Colors.blueGrey,
+                  minimumSize: const Size(250, 60), // 按钮变大
+                  textStyle: const TextStyle(fontSize: 20), // 字体变大
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -122,8 +124,9 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
               const SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.purpleAccent,
-                  minimumSize: const Size(200, 50),
+                  backgroundColor: Colors.blueGrey,
+                  minimumSize: const Size(250, 60), 
+                  textStyle: const TextStyle(fontSize: 20), 
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -140,9 +143,9 @@ class _AIDoctorServiceState extends State<AIDoctorService> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color(0xFF4A148C),
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Color(0xFF9C27B0),
+        backgroundColor: Colors.black,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
         currentIndex: _selectedIndex,

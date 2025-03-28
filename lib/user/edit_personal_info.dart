@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class EditPersonalInfo extends StatefulWidget {
+  const EditPersonalInfo({super.key});
+
   @override
   _EditPersonalInfoState createState() => _EditPersonalInfoState();
 }

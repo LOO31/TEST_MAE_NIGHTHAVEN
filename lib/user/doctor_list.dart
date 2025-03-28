@@ -26,6 +26,8 @@ class Doctor {
 }
 
 class DoctorListPage extends StatefulWidget {
+  const DoctorListPage({super.key});
+
   @override
   _DoctorListPageState createState() => _DoctorListPageState();
 }
@@ -70,7 +72,7 @@ class _DoctorListPageState extends State<DoctorListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF4A148C),
+        backgroundColor: Color.fromARGB(255, 0, 0, 0),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -90,7 +92,7 @@ class _DoctorListPageState extends State<DoctorListPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+              colors: [Color(0xFF091E40), Color(0xFF66363A)],
           ),
         ),
         child: Padding(

@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bcrypt/bcrypt.dart'; // Import bcrypt for password hashing
-import '../services/auth_service.dart'; // Make sure AuthService is properly defined
 import 'mobile_login.dart';
 import 'role_selection.dart'; // Import the login page
 
@@ -20,7 +19,6 @@ class _MobileRegisterState extends State<MobileRegister> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
 
   String? _errorMessage;
   bool _isLoading = false;
@@ -93,6 +91,8 @@ class _MobileRegisterState extends State<MobileRegister> {
           'role': widget.selectedRole, // Role passed from Role Selection
           'auth_uid': uid, // Firebase Authentication UID
           'created_at': FieldValue.serverTimestamp(),
+          'profilePic':
+              "https://i.pinimg.com/736x/c0/74/9b/c0749b7cc401421662ae901ec8f9f660.jpg", // Default profile picture
         });
 
         // On successful registration, navigate to SignIn page and pass email and role
@@ -115,67 +115,67 @@ class _MobileRegisterState extends State<MobileRegister> {
     return regex.hasMatch(email);
   }
 
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: const Color.fromARGB(255, 0, 0, 0),
-    appBar: AppBar(
-      title: const Text(
-        "Mobile Register",
-        style: TextStyle(color: Colors.white), 
-      ),
-      backgroundColor: const Color.fromARGB(0, 0, 0, 0),
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back, color: Colors.white), 
-        onPressed: () {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const RoleSelection()),
-          );
-        },
-      ),
-    ),
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF091E40), Color(0xFF66363A)],
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 0, 0, 0),
+      appBar: AppBar(
+        title: const Text(
+          "Mobile Register",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color.fromARGB(0, 0, 0, 0),
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const RoleSelection()),
+            );
+          },
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 30.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 40),
-            _buildLogo(),
-            const SizedBox(height: 20),
-            _buildTitle(),
-            const SizedBox(height: 20),
-            _buildTextField("Username", controller: _userController),
-            const SizedBox(height: 15),
-            _buildTextField("Email", controller: _emailController),
-            const SizedBox(height: 15),
-            _buildTextField("Password", controller: _passwordController, isPassword: true),
-            const SizedBox(height: 10),
-            if (_errorMessage != null)
-              Text(
-                _errorMessage!,
-                style: const TextStyle(color: Colors.red, fontSize: 14),
-              ),
-            const SizedBox(height: 10),
-            _buildSignInPrompt(),
-            const SizedBox(height: 20),
-            _buildRegisterButton(),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 40),
+              _buildLogo(),
+              const SizedBox(height: 20),
+              _buildTitle(),
+              const SizedBox(height: 20),
+              _buildTextField("Username", controller: _userController),
+              const SizedBox(height: 15),
+              _buildTextField("Email", controller: _emailController),
+              const SizedBox(height: 15),
+              _buildTextField("Password",
+                  controller: _passwordController, isPassword: true),
+              const SizedBox(height: 10),
+              if (_errorMessage != null)
+                Text(
+                  _errorMessage!,
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
+                ),
+              const SizedBox(height: 10),
+              _buildSignInPrompt(),
+              const SizedBox(height: 20),
+              _buildRegisterButton(),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   // Build logo widget
   Widget _buildLogo() {
@@ -229,29 +229,28 @@ Widget build(BuildContext context) {
   }
 
   // Build SignIn prompt widget
-Widget _buildSignInPrompt() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      const Text("Already have an account?",
-          style: TextStyle(color: Colors.white70)),
-      TextButton(
-        onPressed: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MobileLogin(
-              // Transform user inputed email
-              email: _emailController.text.trim(), selectedRole: null, 
+  Widget _buildSignInPrompt() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Already have an account?",
+            style: TextStyle(color: Colors.white70)),
+        TextButton(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MobileLogin(
+                // Transform user inputed email
+                email: _emailController.text.trim(), selectedRole: null,
+              ),
             ),
           ),
+          child: Text("Sign In",
+              style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
         ),
-        child: Text("Sign In",
-            style: GoogleFonts.poppins(color: Colors.white, fontSize: 14)),
-      ),
-    ],
-  );
-}
-
+      ],
+    );
+  }
 
   // Build register button widget
   Widget _buildRegisterButton() {

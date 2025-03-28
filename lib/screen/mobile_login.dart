@@ -6,6 +6,7 @@ import '../admin/admin_dashboard.dart';
 import '../doctor/doctor_dashboard.dart';
 import 'main_page.dart';
 import 'mobile_register.dart';
+import 'role_selection.dart';
 
 class MobileLogin extends StatefulWidget {
   final String? email; 
@@ -99,16 +100,25 @@ class _MobileLoginState extends State<MobileLogin> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        title:
-            const Text("Mobile Login", style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.black,
+    appBar: AppBar(
+      title: const Text("Mobile Login", style: TextStyle(color: Colors.white)),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      iconTheme: const IconThemeData(color: Colors.white),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const RoleSelection()),
+          );
+        },
       ),
+    ),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'doctor_list.dart';
 
 class AIChatPage extends StatefulWidget {
+  const AIChatPage({super.key});
+
   @override
   _AIChatPageState createState() => _AIChatPageState();
 }
@@ -161,7 +163,7 @@ class _AIChatPageState extends State<AIChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.black,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
@@ -186,7 +188,7 @@ class _AIChatPageState extends State<AIChatPage> {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -265,7 +267,7 @@ class _AIChatPageState extends State<AIChatPage> {
                 ],
               ),
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
               child: Row(
                 children: [
                   Expanded(
@@ -275,17 +277,23 @@ class _AIChatPageState extends State<AIChatPage> {
                         hintText: "Type a message...",
                         filled: true,
                         fillColor: Colors.white,
+                        contentPadding: EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16), // 调整内边距
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(15), // 调小圆角
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
                   ),
-                  CircleAvatar(
-                    backgroundColor: Colors.white, // circle color
-                    radius: 25, // circle size
+                  SizedBox(width: 8), // 控制按钮与输入框的间隔
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.blue,
+                      shape: BoxShape.circle,
+                    ),
                     child: IconButton(
-                      icon: Icon(Icons.send, color: Colors.blue),
+                      icon: Icon(Icons.send, color: Colors.white),
                       onPressed: sendMessage,
                     ),
                   ),

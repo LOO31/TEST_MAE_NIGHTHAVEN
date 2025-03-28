@@ -6,7 +6,7 @@ class FollowUpPage extends StatefulWidget {
   final String email;
   final String patientName;
 
-  FollowUpPage({required this.email, required this.patientName});
+  const FollowUpPage({super.key, required this.email, required this.patientName});
 
   @override
   _FollowUpPageState createState() => _FollowUpPageState();

@@ -6,18 +6,18 @@ import 'package:firebase_auth/firebase_auth.dart';
 class DiaryEmotionScreen extends StatefulWidget {
   final String email;
 
-  const DiaryEmotionScreen({Key? key, required this.email}) : super(key: key);
+  const DiaryEmotionScreen({super.key, required this.email});
 
   @override
   _DiaryEmotionScreenState createState() => _DiaryEmotionScreenState();
 }
 
 class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  final CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _selectedDay = DateTime.now();
   DateTime _focusedDay = DateTime.now();
   bool _isDiary = true;
-  TextEditingController _diaryController = TextEditingController();
+  final TextEditingController _diaryController = TextEditingController();
   int _selectedIndex = 1;
   List<Map<String, String>> emotions = [
     {"emoji": "😊", "name": "Happy"},
@@ -164,7 +164,7 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF1C1C3C), Color(0xFF4A148C), Color(0xFF9B59B6)],
+            colors: [Color(0xFF091E40), Color(0xFF66363A)],
           ),
         ),
         child: SafeArea(
@@ -196,9 +196,9 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Color(0xFF4A148C),
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Color(0xFF9C27B0),
+        backgroundColor: Colors.black,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white70,
         type: BottomNavigationBarType.fixed,
         showUnselectedLabels: true,
         currentIndex: _selectedIndex,
@@ -218,20 +218,22 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.center, // 让内容居中
         children: [
           IconButton(
             icon: Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => Navigator.pop(context),
           ),
-          Text('Diary & Emotion',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          IconButton(
-              icon: Icon(Icons.notifications, color: Colors.white),
-              onPressed: () {}),
+          Spacer(), // 添加 Spacer 让标题居中
+          Text(
+            'Diary & Emotion',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          Spacer(), // 添加 Spacer 让标题居中
         ],
       ),
     );
@@ -245,8 +247,7 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
         });
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor:
-            _isDiary == isDiary ? Colors.purpleAccent : Colors.grey,
+        backgroundColor: _isDiary == isDiary ? Colors.blueAccent : Colors.grey,
       ),
       child: Text(title, style: TextStyle(color: Colors.white)),
     );
@@ -266,20 +267,35 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
         });
       },
       headerStyle: HeaderStyle(
+        formatButtonVisible: false,
         titleCentered: true,
         titleTextStyle: TextStyle(
-            fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+        leftChevronIcon: Icon(Icons.chevron_left, color: Colors.white), // 左箭头白色
+        rightChevronIcon:
+            Icon(Icons.chevron_right, color: Colors.white), // 右箭头白色
       ),
       calendarStyle: CalendarStyle(
-        defaultTextStyle: TextStyle(color: Colors.white),
+        defaultTextStyle: TextStyle(color: Colors.white), // 默认文字颜色
+        weekendTextStyle: TextStyle(
+            color: Colors.red, fontWeight: FontWeight.bold), // 周六、周日日期变红色
         selectedDecoration: BoxDecoration(
-          color: Colors.purpleAccent,
+          color: Colors.blueGrey,
           shape: BoxShape.circle,
         ),
         todayDecoration: BoxDecoration(
-          color: Colors.deepPurple,
+          color: Colors.grey,
           shape: BoxShape.circle,
         ),
+      ),
+      daysOfWeekStyle: DaysOfWeekStyle(
+        weekdayStyle: TextStyle(
+            color: Colors.white, fontWeight: FontWeight.bold), // 周一到周五白色
+        weekendStyle: TextStyle(
+            color: Colors.red, fontWeight: FontWeight.bold), // 周六、周日红色
       ),
     );
   }
@@ -310,7 +326,7 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
               _saveDiaryEntry();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purpleAccent,
+              backgroundColor: Colors.blueAccent,
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
             ),
             child: Text('Save', style: TextStyle(color: Colors.white)),
@@ -389,7 +405,7 @@ class _DiaryEmotionScreenState extends State<DiaryEmotionScreen> {
                     );
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.purpleAccent,
+              backgroundColor: Colors.blueAccent,
               foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
               disabledBackgroundColor: Colors.grey,
