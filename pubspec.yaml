@@ -44,7 +44,7 @@ dependencies:
   crypto: ^3.0.3
   #ui & Enhancement
   fluttertoast: ^8.0.9
-  image_picker: ^0.8.5+3 
+  image_picker: ^1.0.7 
   pdf: ^3.10.4
   printing: ^5.11.0
   open_file: ^3.3.2

@@ -40,19 +40,19 @@ class _EditPersonalInfoState extends State<EditPersonalInfo> {
     try {
       QuerySnapshot query = await _firestore
           .collection("users")
-          .where("auth_uid", isEqualTo: user.uid) // 仍然用 auth_uid 查找
+          .where("auth_uid", isEqualTo: user.uid)
           .limit(1)
           .get();
 
       if (query.docs.isNotEmpty) {
-        DocumentSnapshot doc = query.docs.first; // 获取第一个文档
+        DocumentSnapshot doc = query.docs.first;
         Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
 
         print("Firestore User Data: $data");
-        print("User Document ID: ${doc.id}"); // 🔥 这里才是 `userid`
+        print("User Document ID: ${doc.id}");
 
         setState(() {
-          _userIdController.text = doc.id; // ✅ 直接使用文档 ID
+          _userIdController.text = doc.id;
           _usernameController.text = data["username"] ?? "";
           _emailController.text = data["email"] ?? "";
           _roleController.text = data["role"] ?? "";
@@ -100,7 +100,7 @@ class _EditPersonalInfoState extends State<EditPersonalInfo> {
                 _buildTextField("Username", _usernameController),
 
                 /// **Email**
-                _buildTextField("Email", _emailController),
+                _buildReadOnlyTextField("Email", _emailController),
 
                 /// **Role (Read-Only)**
                 _buildReadOnlyTextField("Role", _roleController),
@@ -216,11 +216,10 @@ class _EditPersonalInfoState extends State<EditPersonalInfo> {
             ),
           ),
           validator: (value) {
-            // 允许空密码，只有非空时才验证
             if (value != null && value.isNotEmpty && value.length < 6) {
               return "Password must be at least 6 characters";
             }
-            return null; // 不强制用户填写密码
+            return null;
           },
         ),
         const SizedBox(height: 10),
